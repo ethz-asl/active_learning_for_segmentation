@@ -3,6 +3,12 @@ Wrapper that connects the habitat simulator with ROS.
 It allows to specify velocity inputs for a single agent using the ´/cmd_vel´ topic.
 Additionally, sensor measurement such as RGB, Depth and Semantic Images are published to ros topics.
 
+## Starting Habitat ROS
+
+```bash
+roslaunch habitat_ros habitat_ros.launch
+```
+
 ## Adding a new Sensor
 Assuming a sensor was already added to the habitat environment e.g. using the config file. 
 Measurements of this sensor can be published as a specific topic by defining two functions that are decorated with the @sensorCallback and @rosPublisherCreator decorators.
