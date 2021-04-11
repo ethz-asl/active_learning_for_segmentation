@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>habitat_ros</name>
+  <version>0.0.1</version>
+  <description>
+    This package connects the habitat-sim with ROS
+  </description>
+  <maintainer email="zrene@ethz.ch">René Zurbrügg</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+  <author>René Zurbrügg</author>
+
+  <build_depend>rospy</build_depend>
+  <run_depend>rospy</run_depend>
+</package>
