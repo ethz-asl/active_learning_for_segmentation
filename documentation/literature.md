@@ -57,7 +57,7 @@ Use exploration policy which is used to sample N trajectories which should then 
 - Prediction Error Curiosity: [https://arxiv.org/abs/1705.05363](https://arxiv.org/abs/1705.05363)
 - Object Exploration: Use detected objects as reward
 - Coverage Exploration: Maximize explored area [https://openreview.net/forum?id=SyMWn05F7](https://openreview.net/forum?id=SyMWn05F7)
-- Active Neural Slam: Maximize explored area [https://openreview.net/forum?id=HklXn1BKDH](https://openreview.net/forum?id=HklXn1BKDH))<br>
+- Active Neural Slam: Maximize explored area [https://openreview.net/forum?id=HklXn1BKDH](https://openreview.net/forum?id=HklXn1BKDH)
 
 ### [Embodied Visual Active Learning for Semantic Segmentation](https://arxiv.org/pdf/2012.09503.pdf)
 We study the task of embodied visual active learning, where an agent is set to explore a 3d environment with the goal to acquire visual scene understanding by actively selecting views for which to request annotation.<br>
@@ -92,26 +92,44 @@ Intrinsic reward than is calculated as difference between predicted next state (
 
 ### [An informative path planning framework for UAV-based terrain monitoring](https://link.springer.com/content/pdf/10.1007/s10514-020-09903-2.pdf)
 They introduce a path planning algorithm for a drone with top down view and a 2D Map that should be explored<br>
-A lot of focus is also put on a map representation that is continuous and uses GP. <br>
+A lot of focus is also put on a map representation that is continuous and uses GP e.g. Gas concentration as each point. <br>
 They do not use RRT but splines 
 #### Problem Statement:
 The aim is to maximize the information collected about the environment, while respecting resource constraints, such as energy, time, or distance budgets.<br>
 We seek an optimal trajectory ψ∗ in the space of all continuous trajectories for maximum gain in some information-theoretic measure: ψ∗<br>
-#### Algorithm
- A key aspect of our architecture is its generic formulation, which enables it to adapt to any surface mapping scenario, e.g. elevation, gas concentration, signal strengths, ....<br>
- First an initial trajectory,  defined by N fixed waypoints is defined, through coarse grid search.
 #### Discrete case: 
-Map terrain to 2D occupancy grid.
+Map terrain to 2D occupancy grid. Update each cell depending on classifier output and probability that this output is correct given by a sensor model.
+
 #### Cont. case:
-Use GPs to encode correlations in environmental distribution.<br>
-<br>
-## Others<br>
+Use GPs to encode correlations in environmental distribution. Observations are weighted with a variance matrix depending on the height of the UAV
+
+#### Path Planning
+First calculate optimal initial trajectory based on coarse grid search in the 3D workspace. <br>
+Then refine solution using Covariance Matrix Adaptation Evolution Strategy
+
+#### Utility definition
+- Pure Exploration: Maximize the entropy of the Map given by H(map_prior_measure) - H(map_posterior_measure)
+- Region of interest: Maximize entropy but only use points that satisfy interest condition. E.g. only take point where p(weed) > 10%.
+
+
+### [Informative Path Planning for Extreme Anomaly Detection in Environment Exploration and Monitoring](https://arxiv.org/pdf/2005.10040.pdf)
+**7.April 2021**
+Also use GP to model map
+- Assumes each measurement of UAV can be written as f(z,t) + e, e ~ N(0,sigma)
+- z_n+1 = arg min \int _S(Zn,z) a(z,t; f,D) * Ds, f is surrogate function modeled with GP, Dn data measured so far
+- Use dublin paths to optimize (S(Zn,z))
+
+## Acquisition Functions a()
+- Uncertainty sampling: Use uncertainty of GP -> a(x) = sigma^2(x)
+- Integrated variance reduction (IVR): Assume we would observe point x. How much will this reduce variance at point x?
+- Reduce complexity tails 
+
+## Others
 ### [Online Informative Path Planning for Active Classification Using UAVs](https://arxiv.org/pdf/1609.08446.pdf)
 2D occupancy grid. Each cell is a bernoulli random variable indicating the probability of weed occupancy. <br>
 Update cells based on log likelyhood given classification assignement.
 
 Use 12-degree polynomial paths to connect different viewpoints.
-
 
 
 ### [Volumetric Occupancy Mapping With Probabilistic Depth Completion for Robotic Navigation](https://arxiv.org/pdf/2012.03023.pdf)
