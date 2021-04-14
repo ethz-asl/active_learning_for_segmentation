@@ -100,7 +100,7 @@ We seek an optimal trajectory ψ∗ in the space of all continuous trajectories 
 #### Discrete case: 
 Map terrain to 2D occupancy grid. Update each cell depending on classifier output and probability that this output is correct given by a sensor model.
 
-#### Cont. case:
+#### Cont. case:    
 Use GPs to encode correlations in environmental distribution. Observations are weighted with a variance matrix depending on the height of the UAV
 
 #### Path Planning
@@ -124,7 +124,6 @@ Also use GP to model map
 - Integrated variance reduction (IVR): Assume we would observe point x. How much will this reduce variance at point x?
 - Reduce complexity tails 
 
-## Others
 ### [Online Informative Path Planning for Active Classification Using UAVs](https://arxiv.org/pdf/1609.08446.pdf)
 2D occupancy grid. Each cell is a bernoulli random variable indicating the probability of weed occupancy. <br>
 Update cells based on log likelyhood given classification assignement.
@@ -135,3 +134,15 @@ Use 12-degree polynomial paths to connect different viewpoints.
 ### [Volumetric Occupancy Mapping With Probabilistic Depth Completion for Robotic Navigation](https://arxiv.org/pdf/2012.03023.pdf)
 Infer uncertainty from depth images and include them into the tsdf volume.
 Also use depth completition network
+
+### [An Exploration of Embodied Visual Exploration](https://arxiv.org/pdf/2001.02192.pdf)
+
+### [LEARNING EXPLORATION POLICIES FOR NAVIGATION](https://openreview.net/pdf?id=SyMWn05F7)
+Numerous past works have tackled the problem of task-driven navigation.  But,how to effectively explore a new environment to enable a variety of down-streamtasks has received much less attention.  In this work,  we study how agents canautonomously explore realistic and complex 3D environments without the contextof task-rewards.  We propose a learning-based approach and investigate differentpolicy architectures, reward functions, and training paradigms.  We find that useof policies with spatial memory that are bootstrapped with imitation learning andfinally finetuned with coverage rewards derived purely from on-board sensors canbe effective at exploring novel environments.  We show that our learned explo-ration  policies  can  explore  better  than  classical  approaches  based  on  geometryalone and generic learning-based exploration techniques.
+
+### [Emergence of exploratory look-around behaviors through active observation completion](https://robotics.sciencemag.org/content/4/30/eaaw6326/tab-pdf)
+Standard computer vision systems assume access to intelligently captured inputs (e.g., photos from a human
+photographer), yet autonomously capturing good observations is a major challenge in itself. We address the
+problem of learning to look around: How can an agent learn to acquire informative visual observations? We
+propose a reinforcement learning solution, where the agent is rewarded for reducing its uncertainty about the
+unobserved portions of its environment. 
