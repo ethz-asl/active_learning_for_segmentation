@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cmake-build-debug/devel/setup.sh

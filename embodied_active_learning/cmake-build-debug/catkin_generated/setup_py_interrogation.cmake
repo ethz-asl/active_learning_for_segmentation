@@ -1,0 +1,7 @@
+set(embodied_active_learning_SETUP_PY_SETUP_MODULE "distutils.core")
+set(embodied_active_learning_SETUP_PY_VERSION "0.0.1")
+set(embodied_active_learning_SETUP_PY_SCRIPTS "")
+set(embodied_active_learning_SETUP_PY_PACKAGES "embodied_active_learning")
+set(embodied_active_learning_SETUP_PY_PACKAGE_DIRS "src/embodied_active_learning")
+set(embodied_active_learning_SETUP_PY_MODULES "")
+set(embodied_active_learning_SETUP_PY_MODULE_DIRS "")

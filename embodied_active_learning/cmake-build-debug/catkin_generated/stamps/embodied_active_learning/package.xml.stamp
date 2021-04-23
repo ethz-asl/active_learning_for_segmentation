@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>embodied_active_learning</name>
+    <version>0.0.1</version>
+    <description>TODO</description>
+
+    <author email="zrene@ethz.ch">René Zurbrügg</author>
+
+    <maintainer email="zrene@ethz.ch">René Zurbrügg</maintainer>
+
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <buildtool_depend>catkin_simple</buildtool_depend>
+
+</package>
