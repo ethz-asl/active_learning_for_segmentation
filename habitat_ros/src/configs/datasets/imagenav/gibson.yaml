@@ -1,0 +1,4 @@
+DATASET:
+  TYPE: PointNav-v1
+  SPLIT: train
+  DATA_PATH: /home/rene/catkin_ws/src/habitat-lab/data/datasets/pointnav/gibson/v1/{split}/{split}.json.gz

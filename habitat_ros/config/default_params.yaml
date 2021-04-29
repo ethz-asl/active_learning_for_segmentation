@@ -13,3 +13,8 @@ sensors:
       callback: "mono8Callback"
       publisher: "ImagePublisher"
       topic: "~semantic"
+  availableCameras:
+    - name: "rgb"
+      topic: "~rgb/camera"
+      width: 256
+      height: 256

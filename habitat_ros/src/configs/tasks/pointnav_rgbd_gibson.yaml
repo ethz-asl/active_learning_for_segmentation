@@ -1,0 +1,37 @@
+ENVIRONMENT:
+  MAX_EPISODE_STEPS: 500
+SIMULATOR:
+  AGENT_0:
+    SENSORS: ['RGB_SENSOR', 'DEPTH_SENSOR','BC_SENSOR']
+  HABITAT_SIM_V0:
+    GPU_DEVICE_ID: 0
+  RGB_SENSOR:
+    WIDTH: 720
+    HEIGHT: 720
+  DEPTH_SENSOR:
+    WIDTH: 720
+    HEIGHT: 720
+    POSITION: [0, 0.25, 0]
+  BC_SENSOR:
+    HEIGHT: 720
+    WIDTH: 720
+    HFOV: 45
+    POSITION: [0, 1.25, 3.14] #this is relative to the base of the agent
+    TYPE: HabitatSimBCSensor
+
+TASK:
+  TYPE: Nav-v0
+  SUCCESS_DISTANCE: 0.2
+  SENSORS: ['POINTGOAL_SENSOR']
+  POINTGOAL_SENSOR:
+    TYPE: PointGoalSensor
+    GOAL_FORMAT: POLAR
+  MEASUREMENTS: ['SPL']
+  SPL:
+    TYPE: SPL
+    SUCCESS_DISTANCE: 0.2
+
+DATASET:
+  TYPE: PointNav-v1
+  SPLIT: val
+  DATA_PATH: data/datasets/pointnav/gibson/v1/{split}/{split}.json.gz
