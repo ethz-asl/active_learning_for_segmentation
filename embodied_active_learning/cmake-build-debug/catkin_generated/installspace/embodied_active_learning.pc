@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: embodied_active_learning
-Description: Description of embodied_active_learning
-Version: 0.0.1
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

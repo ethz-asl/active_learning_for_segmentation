@@ -1,8 +1,0 @@
-prefix=/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cmake-build-debug/devel
-
-Name: embodied_active_learning
-Description: Description of embodied_active_learning
-Version: 0.0.1
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
