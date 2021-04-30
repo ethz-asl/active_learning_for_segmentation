@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+**/.ipynb_checkpoints/
+**/cmake-build-debug/
+/embodied_active_learning/cmake-build-debug/
+.idea
