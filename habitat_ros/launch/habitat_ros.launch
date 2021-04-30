@@ -1,5 +1,0 @@
-<launch>
-    <node pkg="habitat_ros" name="habitat_ros" type="habitat_ros.py" output="screen" cwd="node" >
-            <rosparam file="$(find habitat_ros)/config/default_params.yaml" command="load" />
-    </node>
-</launch>

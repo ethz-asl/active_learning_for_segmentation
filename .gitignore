@@ -34,3 +34,6 @@
 **/cmake-build-debug/
 /embodied_active_learning/cmake-build-debug/
 .idea
+cmake-build-debug/
+Unreal/
+**/test_data/

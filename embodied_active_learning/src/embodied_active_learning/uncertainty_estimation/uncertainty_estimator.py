@@ -2,15 +2,14 @@ import numpy as np
 
 
 class SimpleSoftMaxEstimator:
-    def __init__(self, model, from_logits = False):
+
+    def __init__(self, model, from_logits=False):
         """
-        :param model: Function that maps an input NUMPY array to on output NUMPY array
+        :param model: Function that maps an input numpy array to on output numpy array
         :param from_logits: whether the output of the model are logits or softmax predictions
         """
         self.model = model
         self.from_logits = from_logits
-
-
 
     def predict(self, image):
         """
@@ -22,13 +21,14 @@ class SimpleSoftMaxEstimator:
         prediction = self.model(image)
 
         if self.from_logits:
-            prediction = softmax(prediction, axis = -1)
+            prediction = softmax(prediction, axis=-1)
 
         # TODO maybe improve using pytorch that returns both in one call
-        semSeg = np.argmax(prediction, axis = -1).astype(np.uint8)
-        uncertainty = np.max(prediction, axis = -1)
+        semSeg = np.argmax(prediction, axis=-1).astype(np.uint8)
+        uncertainty = np.max(prediction, axis=-1)
 
         return semSeg, uncertainty
+
 
 def softmax(X, theta=1.0, axis=None):
     """
@@ -69,6 +69,7 @@ def softmax(X, theta=1.0, axis=None):
     p = y / ax_sum
 
     # flatten if X was 1D
-    if len(X.shape) == 1: p = p.flatten()
+    if len(X.shape) == 1:
+        p = p.flatten()
 
     return p
