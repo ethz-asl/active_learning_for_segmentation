@@ -10,6 +10,7 @@ import os
 import numpy as np
 from PIL import Image as PilImage
 
+
 class ConstantRateDataAcquisitor:
 
     def __init__(self, semanticConverter):
@@ -56,4 +57,5 @@ class ConstantRateDataAcquisitor:
         # Only take one channel, infrared has 3 channels with same information
         mask = np.frombuffer(semseg_msg.data, dtype=np.uint8).copy()
         mask = mask.reshape(semseg_msg.height, semseg_msg.width, 3)[:, :, 0]
-        PilImage.fromarray(self.semanticConverter.mapInfraredToNyu(mask)).save("{}/{}_mask.png".format(self.path, ts))
+        PilImage.fromarray(self.semanticConverter.mapInfraredToNyu(mask)).save(
+            "{}/{}_mask.png".format(self.path, ts))

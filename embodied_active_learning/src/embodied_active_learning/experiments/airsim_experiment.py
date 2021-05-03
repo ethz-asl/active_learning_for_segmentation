@@ -14,14 +14,15 @@ from embodied_active_learning.data_acquisitors import ConstantRateDataAcquisitor
 from embodied_active_learning.airsim_utils import semantics
 
 
-
 def getDataAcquisitior(params, semanticConverter):
     rospy.loginfo("Create Data Acquisitior for params: {}".format(str(params)))
     type = params.get("type", "constantSampler")
     if type == "constantSampler":
-        return ConstantRateDataAcquisitor.ConstantRateDataAcquisitor(semanticConverter)
+        return ConstantRateDataAcquisitor.ConstantRateDataAcquisitor(
+            semanticConverter)
     else:
         raise ValueError("Invalid Data Sampler supplied:  {}".format(type))
+
 
 class ExperimentManager:
 
@@ -45,7 +46,9 @@ class ExperimentManager:
         z = rospy.get_param("/start_position/z", 0)
         yaw = rospy.get_param("/start_position/yaw", 0)
         self.initial_pose = [x, y, z, yaw]
-        self.airSimSemanticsConverter = semantics.AirSimSemanticsConverter(rospy.get_param("semantic_mapping_path", "../../../cfg/airsim/semanticClasses.yaml"))
+        self.airSimSemanticsConverter = semantics.AirSimSemanticsConverter(
+            rospy.get_param("semantic_mapping_path",
+                            "../../../cfg/airsim/semanticClasses.yaml"))
 
         self._takeoff_proxy = rospy.ServiceProxy(self.ns_airsim + "/" +
                                                  self.vehicle_name + "/takeoff",
@@ -57,7 +60,8 @@ class ExperimentManager:
         if self.launch_simulation():
             try:
                 self.data_aquisitor = getDataAcquisitior(
-                    rospy.get_param("/data_generation", {}), self.airSimSemanticsConverter)
+                    rospy.get_param("/data_generation", {}),
+                    self.airSimSemanticsConverter)
             except ValueError as e:
                 rospy.logerr("Could not create data acquisitor.\n {}".format(
                     str(e)))

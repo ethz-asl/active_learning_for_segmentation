@@ -1,6 +1,7 @@
 import yaml
 import re
 
+
 def testSemantics():
     """ Tests semantic mapping for current unreal environment.
     To use this, simply copy paste the outline of the unreal editor into the following regex form https://regexr.com/5s2nn
@@ -29,18 +30,24 @@ def testSemantics():
 
                     if _class['regex'] != ['']:
                         for pattern in _class['regex']:
-                            if re.compile("^{}$".format(pattern)).match(meshName):
+                            if re.compile(
+                                    "^{}$".format(pattern)).match(meshName):
                                 found = True
                                 name = _class['className']
                                 regex = pattern
                                 break
 
-                    classAndId = "{:<20}".format("{}({})".format(_class['className'],_class['classId']))
+                    classAndId = "{:<20}".format("{}({})".format(
+                        _class['className'], _class['classId']))
                 if not found:
-                    error_print.append("==> Did not find a matching regex expression for\n {}.".format(meshName))
+                    error_print.append(
+                        "==> Did not find a matching regex expression for\n {}."
+                        .format(meshName))
                 else:
-                    fixedLengthStart = "{:<30}".format("Assigned [{}] to ".format(name))
-                    matched_print.append("{} [{}] due to regex rule: {}".format(fixedLengthStart, "{:<40}".format(meshName), regex))
+                    fixedLengthStart = "{:<30}".format(
+                        "Assigned [{}] to ".format(name))
+                    matched_print.append("{} [{}] due to regex rule: {}".format(
+                        fixedLengthStart, "{:<40}".format(meshName), regex))
 
         print("---- MATCHED ------")
         print("\n".join(matched_print))

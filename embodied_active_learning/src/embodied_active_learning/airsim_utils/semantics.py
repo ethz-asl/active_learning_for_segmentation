@@ -2,7 +2,9 @@ import yaml
 import airsim
 import numpy as np
 
+
 class AirSimSemanticsConverter:
+
     def __init__(self, pathToAirsimMapping):
 
         self.pathToAirsimMapping = pathToAirsimMapping
@@ -14,24 +16,32 @@ class AirSimSemanticsConverter:
         for _class in self.yamlConfig['classMappings']:
             self.nyuIdToName[_class['classId']] = _class['className']
 
-    def setAirsimClasses(self, debug = False):
+    def setAirsimClasses(self, debug=False):
         """ Sets all class IDs in the Airsim environment to NYU classes """
         client = airsim.MultirotorClient()
 
-        print("Going to overwrite semantic mapping of airsim using config stored at", self.pathToAirsimMapping)
-        client.simSetSegmentationObjectID(".*",39 , True) # Set otherpro as default class for everything
+        print(
+            "Going to overwrite semantic mapping of airsim using config stored at",
+            self.pathToAirsimMapping)
+        client.simSetSegmentationObjectID(
+            ".*", 39, True)  # Set otherpro as default class for everything
 
         for _class in self.yamlConfig['classMappings']:
             if _class['regex'] != ['']:
                 if debug:
-                    classAndId = "{:<20}".format("{}({})".format(_class['className'],_class['classId']))
+                    classAndId = "{:<20}".format("{}({})".format(
+                        _class['className'], _class['classId']))
                     regexPattern = "{}".format("|".join(_class['regex']))
-                    print("{} : Regex Patterns: {}".format(classAndId,regexPattern))
+                    print("{} : Regex Patterns: {}".format(
+                        classAndId, regexPattern))
                 for pattern in _class['regex']:
                     pattern = pattern
-                    res = client.simSetSegmentationObjectID(pattern, _class['classId'], True)
+                    res = client.simSetSegmentationObjectID(
+                        pattern, _class['classId'], True)
                     if not res:
-                        print("Did not find matching Airsim mesh for pattern ({})".format(pattern) )
+                        print(
+                            "Did not find matching Airsim mesh for pattern ({})"
+                            .format(pattern))
         print("Airsim IDs Set")
 
     def getNyuNameForNyuId(self, id):
@@ -50,7 +60,9 @@ class AirSimSemanticsConverter:
 
         invalidIds = infraredImg >= 40
         if np.any(invalidIds):
-            print("[WARNING] found infrared IDs that were not assigned an NYU class. Will map them to otherpro ({} items)".format(np.sum(invalidIds)))
+            print(
+                "[WARNING] found infrared IDs that were not assigned an NYU class. Will map them to otherpro ({} items)"
+                .format(np.sum(invalidIds)))
             infraredImg[invalidIds] = 39
 
         return infraredImg

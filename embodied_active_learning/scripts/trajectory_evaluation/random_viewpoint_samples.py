@@ -34,10 +34,12 @@ parser.add_argument('--map',
                     default="scripts/map_generation/map.pickle",
                     type=str)
 
-parser.add_argument('--nyu_mapping',
-                    help='Path to nyu mapping .yaml',
-                    default="/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClasses.yaml",
-                    type=str)
+parser.add_argument(
+    '--nyu_mapping',
+    help='Path to nyu mapping .yaml',
+    default=
+    "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClasses.yaml",
+    type=str)
 args = parser.parse_args()
 
 outputFolder = args.out_folder
@@ -48,9 +50,13 @@ nyuMappingsYaml = args.nyu_mapping
 airSimSemanticsConverter = semantics.AirSimSemanticsConverter(nyuMappingsYaml)
 airSimSemanticsConverter.setAirsimClasses()
 
-
 # Mapping from airsim type to string
-typeToName = {'0': "img", '1': "depth", '5': "semantic", '7': "mask"} # 7 is semantics as infrared
+typeToName = {
+    '0': "img",
+    '1': "depth",
+    '5': "semantic",
+    '7': "mask"
+}  # 7 is semantics as infrared
 
 # Font to write numbers on preview image
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -109,11 +115,12 @@ while cnt < pointsToSample:
 
     # Check if there are enough semantic classes
     for response in responses:
-        if response.image_type == 7: # infrared
+        if response.image_type == 7:  # infrared
             # get numpy array
             img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
             # 3 channels with same value, just use one
-            img_rgb_flatten = img1d.reshape(response.height, response.width, 3)[:,:,0]
+            img_rgb_flatten = img1d.reshape(response.height, response.width,
+                                            3)[:, :, 0]
 
             if len(np.unique(img_rgb_flatten)) < minSemanticClasses:
                 print(
@@ -121,13 +128,20 @@ while cnt < pointsToSample:
                     .format(cnt, len(np.unique(img_rgb_flatten))))
                 cnt = cnt - 1
                 break
-            img_rgb_flatten = airSimSemanticsConverter.mapInfraredToNyu(img_rgb_flatten)
+            img_rgb_flatten = airSimSemanticsConverter.mapInfraredToNyu(
+                img_rgb_flatten)
 
             print(img_rgb_flatten.shape, img_rgb_flatten)
-            print("Classes in img:", ",".join([airSimSemanticsConverter.getNyuNameForNyuId(idx) for idx in np.unique(img_rgb_flatten)]))
-            file_name =  '{}_{:04d}.png'.format(typeToName[str(response.image_type)], cnt)
+            print(
+                "Classes in img:", ",".join([
+                    airSimSemanticsConverter.getNyuNameForNyuId(idx)
+                    for idx in np.unique(img_rgb_flatten)
+                ]))
+            file_name = '{}_{:04d}.png'.format(
+                typeToName[str(response.image_type)], cnt)
 
-            Image.fromarray(img_rgb_flatten.astype(np.uint8)).save(os.path.join(outputFolder, file_name))
+            Image.fromarray(img_rgb_flatten.astype(np.uint8)).save(
+                os.path.join(outputFolder, file_name))
             print("Saved image ({}/{})".format(cnt, pointsToSample - 1))
             # Draw poses on image
             direction = np.asarray([np.sin(yaw), np.cos(yaw)])
