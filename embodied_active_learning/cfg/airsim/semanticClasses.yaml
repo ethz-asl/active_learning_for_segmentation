@@ -1,0 +1,327 @@
+---
+classMappings:
+  -
+    classId: 0
+    className: "wall"
+    regex:
+      - .*Tile.*
+      - SM_Walls
+  -
+    classId: 1
+    className: "floor"
+    regex:
+      - Ground_?[0-9]*
+      - SM_Floor_?[0-9]*
+      - TemplateFloor
+  -
+    classId: 2
+    className: "cabinet"
+    regex:
+      - SM_Kitchen_Fur_WallCabinet_\w*
+      - SM_Kitchen_Fur_FloorCabinet_\w*
+  -
+    classId: 3
+    className: "bed"
+    regex:
+      - SM_Bed_?[0-9]*
+  -
+    classId: 4
+    className: "chair"
+    regex:
+      - .*Chair.*
+  -
+    classId: 5
+    className: "sofa"
+    regex:
+      - SM_Sofa.*
+  -
+    classId: 6
+    className: "table"
+    regex:
+      - SM_Bed_table.*
+      - SM_Coffee_table_?[0-9]*
+      - SM_Table_?[0-9]*
+  -
+    classId: 7
+    className: "door"
+    regex:
+      - Door_?.*
+      - SM_Door_?[0-9]*_?[0-9]*
+  - classId: 8
+    className: "window"
+    regex:
+      - SM_Windows_glass
+      - SM_Windows_Windows
+      - SM_Windows
+  -
+    classId: 9
+    className: "bookshelf"
+    regex:
+      - ""
+  -
+    classId: 10
+    className: "picture"
+    regex:
+      - SM_Picture_?[0-9]*
+  -
+    classId: 11
+    className: "counter"
+    regex:
+      - .*FloorCabinet.*
+      - .*WallCabinet.*
+      - SM_Kitchen
+  -
+    classId: 12
+    className: "blinds"
+    regex:
+      - ""
+  -
+    classId: 13
+    className: "desk"
+    regex:
+      - ""
+  -
+    classId: 14
+    className: "shelves"
+    regex:
+      - ""
+  -
+    classId: 15
+    className: "curtain"
+    regex:
+      - SM_Curtains
+  -
+    classId: 16
+    className: "dresser"
+    regex:
+      - ""
+  -
+    classId: 17
+    className: "pillow"
+    regex:
+      - .*Pillow.*
+  -
+    classId: 18
+    className: "mirror"
+    regex:
+      - ""
+  -
+    classId: 19
+    className: "floor mat"
+    regex:
+      - SM_Carpet_?[0-9]*
+  -
+    classId: 20
+    className: "clothes"
+    regex:
+      - ""
+  -
+    classId: 21
+    className: "ceiling"
+    regex:
+      - SM_Ceiling
+  -
+    classId: 22
+    className: "books"
+    regex:
+      - SM_Stack_of_Books_?[0-9]*
+  -
+    classId: 23
+    className: "refridgerator"
+    regex:
+      - ""
+  -
+    classId: 24
+    className: "television"
+    regex:
+      - SM_TV_Wall
+      - SM_TV
+  -
+    classId: 25
+    className: "paper"
+    regex:
+      - ""
+  -
+    classId: 26
+    className: "towel"
+    regex:
+      - ""
+  -
+    classId: 27
+    className: "shower curtain"
+    regex:
+      - ""
+  -
+    classId: 28
+    className: "box"
+    regex:
+      - ""
+  -
+    classId: 29
+    className: "whiteboard"
+    regex:
+      - ""
+  -
+    classId: 30
+    className: "person"
+    regex:
+      - ""
+  -
+    classId: 31
+    className: "night stand"
+    regex:
+      - ""
+  -
+    classId: 32
+    className: "toilet"
+    regex:
+      - ""
+  -
+    classId: 33
+    className: "sink"
+    regex:
+      - .*Sink.*
+  -
+    classId: 34
+    className: "lamp"
+    regex:
+      - .*Lamp.*
+      - .*lamp.*
+  -
+    classId: 35
+    className: "bathtub"
+    regex:
+      - ""
+  -
+    classId: 36
+    className: "bag"
+    regex:
+      - ""
+  -
+    classId: 37
+    className: "otherstructure"
+    regex:
+      - ""
+  -
+    classId: 38
+    className: "otherfurniture"
+    regex:
+      - SM_Kitchen_KNOXHULT_Exhaust_Hood_?[0-9]*
+      - SM_BakeOven_?[0-9]*
+      - SM_Kitchen_Fur_Exhaust_Hood
+  -
+    classId: 39
+    className: "otherprop"
+    regex:
+      - Lock[0-9]*
+      - SM_Table_Decor
+      - SM_Tumblr[0-9]*
+      - SM_Remote
+      - SM_Plate_?[0-9]*
+      - SM_Plant
+      - SM_Journal_?[0-9]*
+      - SM_Dimmer_?[0-9]*
+      - SM_Decor_?[0-9]*
+      - SM_Digital_Clock
+      - SM_Bowl_?[0-9]*
+      - SM_Box_?[0-9]*
+      - SM_Cloth_?[0-9]*
+      - SM_Cup_?[0-9]*
+      - SM_Cuttingboard_?[0-9]*
+      - SM_Jar_?[0-9]*
+      - SM_Knives_Stand_Hivla_?[0-9]*
+      - SM_Plate_?[0-9]*
+      - SM_Spice_jar_?[0-9]*
+      - SM_Stand.*
+      - SM_Tool.*
+      - SM_Yukke_Watch.*
+      - SM_Cup_?[0-9]*
+      - SM_Knives_Stand_?[0-9]*
+      - SM_Wall_Clock
+      - SM_Lock
+      - SM_WallWatch_?[0-9]*
+
+airsimInfraredToNyu:
+  0: 0
+  13: 1
+  22: 2
+  28: 3
+  34: 4
+  38: 5
+  42: 6
+  46: 7
+  50: 8
+  53: 9
+  56: 10
+  59: 11
+  61: 12
+  64: 13
+  66: 14
+  69: 15
+  71: 16
+  73: 17
+  75: 18
+  77: 19
+  79: 20
+  81: 21
+  83: 22
+  85: 23
+  86: 24
+  88: 25
+  90: 26
+  91: 27
+  93: 28
+  95: 29
+  96: 30
+  98: 31
+  99: 32
+  101: 33
+  102: 34
+  104: 35
+  105: 36
+  106: 37
+  108: 38
+  109: 39
+
+nyuToAirsimInfrared:
+  0: 0
+  1: 13
+  2: 22
+  3: 28
+  4: 34
+  5: 38
+  6: 42
+  7: 46
+  8: 50
+  9: 53
+  10: 56
+  11: 59
+  12: 61
+  13: 64
+  14: 66
+  15: 69
+  16: 71
+  17: 73
+  18: 75
+  19: 77
+  20: 79
+  21: 81
+  22: 83
+  23: 85
+  24: 86
+  25: 88
+  26: 90
+  27: 91
+  28: 93
+  29: 95
+  30: 96
+  31: 98
+  32: 99
+  33: 101
+  34: 102
+  35: 104
+  36: 105
+  37: 106
+  38: 108
+  39: 109
+

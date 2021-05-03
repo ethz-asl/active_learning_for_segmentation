@@ -4,23 +4,15 @@ Simple Data Acquisitor. Extracts visible camera images + semseg classes at const
 
 import rospy
 from message_filters import ApproximateTimeSynchronizer, Subscriber
-from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import time
 import os
-
-import sys
-# Imports that get messed up by ros python 2.7 imports
-python27_imports = [p for p in sys.path if "2.7" in p]
-sys.path = [p for p in sys.path if "2.7" not in p]
-import cv2
-sys.path.extend(python27_imports)
-
+import numpy as np
+from PIL import Image as PilImage
 
 class ConstantRateDataAcquisitor:
 
-    def __init__(self):
-        self.bridge = CvBridge()
+    def __init__(self, semanticConverter):
         params = rospy.get_param("/data_generation", {})
 
         self.rate = params.get("rate", 1)
@@ -34,6 +26,8 @@ class ConstantRateDataAcquisitor:
         self.last_request = rospy.get_rostime()
 
         self.path = self.path + "/experiment_" + str(time.time())
+        self.semanticConverter = semanticConverter
+
         os.mkdir(self.path)
 
         ts = ApproximateTimeSynchronizer(
@@ -53,12 +47,13 @@ class ConstantRateDataAcquisitor:
 
         self.last_request = rospy.get_rostime()
 
-        try:
-            ts = str(time.time())
-            cv_image = self.bridge.imgmsg_to_cv2(rgb_msg, "bgr8")
-            cv2.imwrite("{}/{}_rgb.png".format(self.path, ts), cv_image)
+        ts = str(time.time())
 
-            cv_image = self.bridge.imgmsg_to_cv2(semseg_msg, "mono8")
-            cv2.imwrite("{}/{}_semseg.png".format(self.path, ts), cv_image)
-        except CvBridgeError as e:
-            print(e)
+        img = np.frombuffer(rgb_msg.data, dtype=np.uint8)
+        img = img.reshape(rgb_msg.height, rgb_msg.width, 3)[:, :, [2, 1, 0]]
+        PilImage.fromarray(img).save("{}/{}_rgb.png".format(self.path, ts))
+
+        # Only take one channel, infrared has 3 channels with same information
+        mask = np.frombuffer(semseg_msg.data, dtype=np.uint8).copy()
+        mask = mask.reshape(semseg_msg.height, semseg_msg.width, 3)[:, :, 0]
+        PilImage.fromarray(self.semanticConverter.mapInfraredToNyu(mask)).save("{}/{}_mask.png".format(self.path, ts))

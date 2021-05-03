@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Main Class that manages an embodied active learning experiments.
 First moves the drone to an initial position and then starts the planner and starts the data acquisitor
@@ -11,16 +11,17 @@ from airsim_ros_pkgs.srv import SetLocalPosition
 from airsim_ros_pkgs.srv import Takeoff
 
 from embodied_active_learning.data_acquisitors import ConstantRateDataAcquisitor
+from embodied_active_learning.airsim_utils import semantics
 
 
-def getDataAcquisitior(params):
+
+def getDataAcquisitior(params, semanticConverter):
     rospy.loginfo("Create Data Acquisitior for params: {}".format(str(params)))
     type = params.get("type", "constantSampler")
     if type == "constantSampler":
-        return ConstantRateDataAcquisitor.ConstantRateDataAcquisitor()
+        return ConstantRateDataAcquisitor.ConstantRateDataAcquisitor(semanticConverter)
     else:
         raise ValueError("Invalid Data Sampler supplied:  {}".format(type))
-
 
 class ExperimentManager:
 
@@ -44,6 +45,7 @@ class ExperimentManager:
         z = rospy.get_param("/start_position/z", 0)
         yaw = rospy.get_param("/start_position/yaw", 0)
         self.initial_pose = [x, y, z, yaw]
+        self.airSimSemanticsConverter = semantics.AirSimSemanticsConverter(rospy.get_param("semantic_mapping_path", "../../../cfg/airsim/semanticClasses.yaml"))
 
         self._takeoff_proxy = rospy.ServiceProxy(self.ns_airsim + "/" +
                                                  self.vehicle_name + "/takeoff",
@@ -55,7 +57,7 @@ class ExperimentManager:
         if self.launch_simulation():
             try:
                 self.data_aquisitor = getDataAcquisitior(
-                    rospy.get_param("/data_generation", {}))
+                    rospy.get_param("/data_generation", {}), self.airSimSemanticsConverter)
             except ValueError as e:
                 rospy.logerr("Could not create data acquisitor.\n {}".format(
                     str(e)))
@@ -77,6 +79,9 @@ class ExperimentManager:
         else:
             rospy.wait_for_service(self.ns_airsim + "/drone_1/takeoff",
                                    self.startup_timeout)
+
+        rospy.loginfo("Setting semantic classes to NYU mode")
+        self.airSimSemanticsConverter.setAirsimClasses()
 
         rospy.loginfo("Taking off")
         self._takeoff_proxy(True)

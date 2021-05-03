@@ -66,7 +66,7 @@
     <group ns="experiment">
         <!-- Experiment launcher. Starts Planner, Captures Images etc. -->
         <node name="experiment_node" pkg="embodied_active_learning" type="airsim_experiment.py" output="screen"
-              required="true">
+              required="true" cwd="node">
             <param name="ns_planner" value="/planner/planner_node"/>
             <param name="ns_airsim" value="/airsim/airsim_node"/>
             <param name="delay" value="$(arg delay)"/>
@@ -74,7 +74,7 @@
 
             <remap from="rgbImage" to="/airsim/airsim_node/$(arg mav_name)/front/Scene"/>
             <remap from ="depthImage" to = "/airsim/airsim_node/$(arg mav_name)/front/DepthPlanner"/>
-            <remap from ="semsegImage" to = "/semseg/image"/>
+            <remap from ="semsegImage" to = "/airsim/airsim_node/$(arg mav_name)/front/Infrared"/>
 
         </node>
     </group>

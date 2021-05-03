@@ -12,6 +12,8 @@ import os
 import time
 import argparse
 
+from embodied_active_learning.airsim_utils import semantics
+
 parser = argparse.ArgumentParser(
     description='Creates test set with random images from environment')
 parser.add_argument('--n_imgs',
@@ -29,17 +31,26 @@ parser.add_argument('--out_folder',
                     type=str)
 parser.add_argument('--map',
                     help='Path to map.pickle file',
-                    default="./map.pickle",
+                    default="scripts/map_generation/map.pickle",
                     type=str)
 
+parser.add_argument('--nyu_mapping',
+                    help='Path to nyu mapping .yaml',
+                    default="/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClasses.yaml",
+                    type=str)
 args = parser.parse_args()
 
 outputFolder = args.out_folder
 pointsToSample = args.n_imgs
 minSemanticClasses = args.min_sem_classes
+nyuMappingsYaml = args.nyu_mapping
+
+airSimSemanticsConverter = semantics.AirSimSemanticsConverter(nyuMappingsYaml)
+airSimSemanticsConverter.setAirsimClasses()
+
 
 # Mapping from airsim type to string
-typeToName = {'0': "img", '1': "depth", '5': "semantic"}
+typeToName = {'0': "img", '1': "depth", '5': "semantic", '7': "mask"} # 7 is semantics as infrared
 
 # Font to write numbers on preview image
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -93,31 +104,30 @@ while cnt < pointsToSample:
     responses = client.simGetImages([
         airsim.ImageRequest("0", airsim.ImageType.Scene),
         airsim.ImageRequest("0", airsim.ImageType.DepthPlanner, True),
-        airsim.ImageRequest("0", airsim.ImageType.Segmentation, False, False)
+        airsim.ImageRequest("0", airsim.ImageType.Infrared, False, False)
     ])
 
     # Check if there are enough semantic classes
     for response in responses:
-        if response.image_type == 5:
+        if response.image_type == 7: # infrared
             # get numpy array
             img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
-            img_rgb = img1d.reshape(response.height, response.width, 3)
-            img_rgb_flatten = img_rgb[:, :,
-                                      0] * 255 * 255 + img_rgb[:, :,
-                                                               1] * 255 + img_rgb[:, :,
-                                                                                  2]
+            # 3 channels with same value, just use one
+            img_rgb_flatten = img1d.reshape(response.height, response.width, 3)[:,:,0]
+
             if len(np.unique(img_rgb_flatten)) < minSemanticClasses:
                 print(
                     "Image #{} did not have enough semantic classes ({})\n Going to request another pose"
                     .format(cnt, len(np.unique(img_rgb_flatten))))
                 cnt = cnt - 1
                 break
+            img_rgb_flatten = airSimSemanticsConverter.mapInfraredToNyu(img_rgb_flatten)
 
-            Image.fromarray(img_rgb).save(
-                os.path.join(
-                    outputFolder,
-                    '{}_{:04d}.png'.format(typeToName[str(response.image_type)],
-                                           cnt)))
+            print(img_rgb_flatten.shape, img_rgb_flatten)
+            print("Classes in img:", ",".join([airSimSemanticsConverter.getNyuNameForNyuId(idx) for idx in np.unique(img_rgb_flatten)]))
+            file_name =  '{}_{:04d}.png'.format(typeToName[str(response.image_type)], cnt)
+
+            Image.fromarray(img_rgb_flatten.astype(np.uint8)).save(os.path.join(outputFolder, file_name))
             print("Saved image ({}/{})".format(cnt, pointsToSample - 1))
             # Draw poses on image
             direction = np.asarray([np.sin(yaw), np.cos(yaw)])
@@ -139,7 +149,7 @@ while cnt < pointsToSample:
                     '{}_{:04d}.pfm'.format(typeToName[str(response.image_type)],
                                            cnt)),
                 airsim.get_pfm_array(response))
-        elif response.image_type != 5:
+        elif response.image_type != 7:
             airsim.write_file(
                 os.path.join(
                     outputFolder, './{}_{:04d}.png'.format(
