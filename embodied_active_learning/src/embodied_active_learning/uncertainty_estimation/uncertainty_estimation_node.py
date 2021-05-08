@@ -206,9 +206,7 @@ class UncertaintyManager:
         img = img.reshape(rgb_msg.height, rgb_msg.width, 3)[:, :, [2, 1, 0]]
         img_shape = img.shape
 
-        # semseg, uncertainty = self.uncertainty_estimator.predict(img)
-        semseg = img[:,:,0] / 255
-        uncertainty = img [:,:,1] / 255
+        semseg, uncertainty = self.uncertainty_estimator.predict(img)
         timeDiff = time.time() - startTime
         print("segmented images in {:.4f}s, {:.4f} FPs".format(
             timeDiff, 1 / timeDiff))
@@ -221,7 +219,6 @@ class UncertaintyManager:
 
         pc_msg = PointCloud2()
         pc_msg.header.frame_id = rgb_msg.header.frame_id
-        pc_msg.header.stamp = rospy.Time.now()
         pc_msg.width = data.shape[0]
         pc_msg.height = 1
         pc_msg.fields = [
