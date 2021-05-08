@@ -1,12 +1,10 @@
 import yaml
-import airsim
 import numpy as np
 
 
 class AirSimSemanticsConverter:
 
     def __init__(self, pathToAirsimMapping):
-
         self.pathToAirsimMapping = pathToAirsimMapping
         self.yamlConfig = None
         with open(pathToAirsimMapping) as file:
@@ -18,6 +16,8 @@ class AirSimSemanticsConverter:
 
     def setAirsimClasses(self, debug=False):
         """ Sets all class IDs in the Airsim environment to NYU classes """
+
+        import airsim
         client = airsim.MultirotorClient()
 
         print(

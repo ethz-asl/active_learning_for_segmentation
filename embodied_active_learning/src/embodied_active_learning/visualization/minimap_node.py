@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
 Publishes a minimap with the robot pose as Image
 """
@@ -7,10 +7,11 @@ Publishes a minimap with the robot pose as Image
 import rospy
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 import tf
+
 import numpy as np
 import pickle
-from cv_bridge import CvBridge
 import cv2
 
 

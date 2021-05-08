@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Main Class that manages an embodied active learning experiments.
 First moves the drone to an initial position and then starts the planner and starts the data acquisitor

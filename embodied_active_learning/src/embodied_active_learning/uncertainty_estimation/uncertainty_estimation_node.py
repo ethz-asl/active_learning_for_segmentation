@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Node that takes an RGB input image and predicts semantic classes + uncertainties
 """
@@ -18,19 +18,14 @@ from matplotlib import cm
 import time
 import sys
 
+from struct import pack, unpack
 # Ugly way to use refinenet TODO find a better way, install as pip package...
 sys.path.append(os.getcwd() + "/../../../")
 sys.path.append(os.getcwd() + "/../../../refinenet")
 
-# Imports that get messed up by ros python 2.7 imports (Mostly cv2 related issues)
-python27_imports = [p for p in sys.path if "2.7" in p]
-sys.path = [p for p in sys.path if "2.7" not in p]
 from refinenet.models.resnet import rf_lw50, rf_lw101, rf_lw152
 from refinenet.utils.helpers import prepare_img
 import cv2
-
-sys.path.extend(python27_imports)
-# done removing ros paths
 
 from uncertainty_estimator import SimpleSoftMaxEstimator
 
@@ -211,23 +206,29 @@ class UncertaintyManager:
         img = img.reshape(rgb_msg.height, rgb_msg.width, 3)[:, :, [2, 1, 0]]
         img_shape = img.shape
 
-        semseg, uncertainty = self.uncertainty_estimator.predict(img)
-
+        # semseg, uncertainty = self.uncertainty_estimator.predict(img)
+        semseg = img[:,:,0] / 255
+        uncertainty = img [:,:,1] / 255
         timeDiff = time.time() - startTime
         print("segmented images in {:.4f}s, {:.4f} FPs".format(
             timeDiff, 1 / timeDiff))
 
         (x, y, z) = self.depth_to_3d(img_depth, camera)
-        data = (np.vstack([x, y, z, uncertainty.reshape(-1)])).T
+        color = (uncertainty*254).astype(int).reshape(-1)
+        packed = pack('%di' % len(color), *color)
+        unpacked = unpack('%df' % len(color), packed)
+        data = (np.vstack([x, y, z,  np.array(unpacked)])).T
+
         pc_msg = PointCloud2()
         pc_msg.header.frame_id = rgb_msg.header.frame_id
+        pc_msg.header.stamp = rospy.Time.now()
         pc_msg.width = data.shape[0]
         pc_msg.height = 1
         pc_msg.fields = [
             PointField('x', 0, PointField.FLOAT32, 1),
             PointField('y', 4, PointField.FLOAT32, 1),
             PointField('z', 8, PointField.FLOAT32, 1),
-            PointField('intensity', 12, PointField.FLOAT32, 1)
+            PointField('rgb', 12, PointField.FLOAT32, 1)
         ]
         pc_msg.is_bigendian = False
         pc_msg.point_step = 16
@@ -246,6 +247,7 @@ class UncertaintyManager:
             # Create and publish image message
             semseg_msg = Image()
             semseg_msg.header = rgb_msg.header
+
             semseg_msg.height = img_shape[0]
             semseg_msg.width = img_shape[1]
             semseg_msg.step = rgb_msg.width
