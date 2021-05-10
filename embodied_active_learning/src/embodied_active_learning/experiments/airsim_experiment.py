@@ -10,7 +10,7 @@ from std_srvs.srv import SetBool
 from airsim_ros_pkgs.srv import SetLocalPosition
 from airsim_ros_pkgs.srv import Takeoff
 
-from embodied_active_learning.data_acquisitors import ConstantRateDataAcquisitor
+from embodied_active_learning.data_acquisitors import constant_rate_data_acquisitor
 from embodied_active_learning.airsim_utils import semantics
 
 
@@ -18,7 +18,7 @@ def getDataAcquisitior(params, semanticConverter):
     rospy.loginfo("Create Data Acquisitior for params: {}".format(str(params)))
     type = params.get("type", "constantSampler")
     if type == "constantSampler":
-        return ConstantRateDataAcquisitor.ConstantRateDataAcquisitor(
+        return constant_rate_data_acquisitor.ConstantRateDataAcquisitor(
             semanticConverter)
     else:
         raise ValueError("Invalid Data Sampler supplied:  {}".format(type))
@@ -81,7 +81,7 @@ class ExperimentManager:
                         self.startup_timeout))
                 return False
         else:
-            rospy.wait_for_service(self.ns_airsim + "/drone_1/takeoff",
+            rospy.wait_for_service("{}/{}/takeoff".format(self.ns_airsim, self.vehicle_name),
                                    self.startup_timeout)
 
         rospy.loginfo("Setting semantic classes to NYU mode")
@@ -95,12 +95,13 @@ class ExperimentManager:
             self.startup_timeout)
         self._move_to_position_proxy(self.initial_pose[0], self.initial_pose[1],
                                      -self.initial_pose[2],
-                                     self.initial_pose[3], 'drone_1')
+                                     self.initial_pose[3], self.vehicle_name)
         rospy.sleep(10)
         # Launch planner (by service, every planner needs to advertise this service when ready)
         rospy.loginfo("Waiting for planner to be ready...")
         if self.startup_timeout > 0.0:
             try:
+                print(self.ns_planner + "/toggle_running")
                 rospy.wait_for_service(self.ns_planner + "/toggle_running",
                                        self.startup_timeout)
             except rospy.ROSException:
@@ -118,8 +119,10 @@ class ExperimentManager:
             rospy.sleep(self.planner_delay)
         else:
             rospy.loginfo("Waiting for planner to be ready... done.")
+
         run_planner_srv = rospy.ServiceProxy(
             self.ns_planner + "/toggle_running", SetBool)
+
         run_planner_srv(True)
         rospy.loginfo("\n" + "*" * 39 +
                       "\n* Succesfully started the simulation! *\n" + "*" * 39)
