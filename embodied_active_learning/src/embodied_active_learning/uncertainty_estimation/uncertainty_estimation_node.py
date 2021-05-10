@@ -47,7 +47,7 @@ def getUncertaintyEstimatorForParams(params):
             "Parameters\n- Size: {}\n- Classes: {}\n- pretrained: {}".format(
                 size, classes, pretrained))
 
-        has_cuda = False  # torch.cuda.is_available() <- Disable cuda locally to not get memory issues
+        has_cuda = torch.cuda.is_available()
         if size == 50:
             net = rf_lw50(classes, pretrained=pretrained).eval()
         elif size == 101:
