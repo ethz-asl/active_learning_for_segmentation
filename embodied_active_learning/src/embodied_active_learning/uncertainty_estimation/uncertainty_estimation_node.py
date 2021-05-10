@@ -12,17 +12,10 @@ from message_filters import ApproximateTimeSynchronizer, Subscriber
 
 import torch
 import numpy as np
-
-import os
 from matplotlib import cm
 import time
-import sys
 
 from struct import pack, unpack
-# Ugly way to use refinenet TODO find a better way, install as pip package...
-sys.path.append(os.getcwd() + "/../../../")
-sys.path.append(os.getcwd() + "/../../../refinenet")
-
 from refinenet.models.resnet import rf_lw50, rf_lw101, rf_lw152
 from refinenet.utils.helpers import prepare_img
 import cv2
