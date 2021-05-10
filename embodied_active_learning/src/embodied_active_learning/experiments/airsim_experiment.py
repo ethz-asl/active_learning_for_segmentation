@@ -69,20 +69,16 @@ class ExperimentManager:
     def launch_simulation(self):
         rospy.loginfo("Experiment setup: waiting for airsim to launch")
         # Wait for airsim simulation to setup
-        if self.startup_timeout > 0.0:
-            try:
-                rospy.wait_for_service(
-                    self.ns_airsim + "/{}/takeoff".format(self.vehicle_name),
-                    self.startup_timeout)
+        try:
+            rospy.wait_for_service(
+                self.ns_airsim + "/{}/takeoff".format(self.vehicle_name),
+                self.startup_timeout)
 
-            except rospy.ROSException:
-                rospy.logerr(
-                    "Simulation startup failed (timeout after {} s).".format(
-                        self.startup_timeout))
-                return False
-        else:
-            rospy.wait_for_service("{}/{}/takeoff".format(self.ns_airsim, self.vehicle_name),
-                                   self.startup_timeout)
+        except rospy.ROSException:
+            rospy.logerr(
+                "Simulation startup failed (timeout after {} s).".format(
+                    self.startup_timeout))
+            return False
 
         rospy.loginfo("Setting semantic classes to NYU mode")
         self.airSimSemanticsConverter.setAirsimClasses()
