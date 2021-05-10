@@ -34,7 +34,7 @@ class MinimapManager:
             rospy.logerr("[MinimapManager] Could not open minimap {}".format(
                 str(e)))
 
-        self.map_rgb = map_struct['map'].astype(np.uint8)  # Binary map
+        self.map_rgb = (map_struct['map'] > 0).astype(np.uint8)  # Binary map
 
         if len(self.map_rgb.shape) == 2 or self.map_rgb.shape[-1] == 1:
             rospy.loginfo("Provided map only was one channel")
