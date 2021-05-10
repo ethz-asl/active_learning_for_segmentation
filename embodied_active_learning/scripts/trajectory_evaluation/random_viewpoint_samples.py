@@ -27,7 +27,7 @@ parser.add_argument(
     type=int)
 parser.add_argument('--out_folder',
                     help='Output folder where images should be saved',
-                    default="./test_data",
+                    default="/home/rene/thesis/test_data",
                     type=str)
 parser.add_argument('--map',
                     help='Path to map.pickle file',
@@ -115,32 +115,31 @@ while cnt < pointsToSample:
 
     # Check if there are enough semantic classes
     for response in responses:
-        if response.image_type == 7:  # infrared
+        if response.image_type == 7:  # infrared (Semantics are encoded as infrared value)
             # get numpy array
             img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
             # 3 channels with same value, just use one
-            img_rgb_flatten = img1d.reshape(response.height, response.width,
+            img_semantics = img1d.reshape(response.height, response.width,
                                             3)[:, :, 0]
 
-            if len(np.unique(img_rgb_flatten)) < minSemanticClasses:
+            if len(np.unique(img_semantics)) < minSemanticClasses:
                 print(
                     "Image #{} did not have enough semantic classes ({})\n Going to request another pose"
-                    .format(cnt, len(np.unique(img_rgb_flatten))))
+                    .format(cnt, len(np.unique(img_semantics))))
                 cnt = cnt - 1
                 break
-            img_rgb_flatten = airSimSemanticsConverter.mapInfraredToNyu(
-                img_rgb_flatten)
+            img_semantics = airSimSemanticsConverter.mapInfraredToNyu(
+                img_semantics)
 
-            print(img_rgb_flatten.shape, img_rgb_flatten)
             print(
                 "Classes in img:", ",".join([
                     airSimSemanticsConverter.getNyuNameForNyuId(idx)
-                    for idx in np.unique(img_rgb_flatten)
+                    for idx in np.unique(img_semantics)
                 ]))
             file_name = '{}_{:04d}.png'.format(
                 typeToName[str(response.image_type)], cnt)
 
-            Image.fromarray(img_rgb_flatten.astype(np.uint8)).save(
+            Image.fromarray(img_semantics.astype(np.uint8)).save(
                 os.path.join(outputFolder, file_name))
             print("Saved image ({}/{})".format(cnt, pointsToSample - 1))
             # Draw poses on image
