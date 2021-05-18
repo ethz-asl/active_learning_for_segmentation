@@ -48,7 +48,7 @@ minSemanticClasses = args.min_sem_classes
 nyuMappingsYaml = args.nyu_mapping
 
 airSimSemanticsConverter = semantics.AirSimSemanticsConverter(nyuMappingsYaml)
-airSimSemanticsConverter.setAirsimClasses()
+airSimSemanticsConverter.set_airsim_classes()
 
 # Mapping from airsim type to string
 typeToName = {
@@ -108,9 +108,9 @@ while cnt < pointsToSample:
     time.sleep(0.1)  # Just to be sure :)
 
     responses = client.simGetImages([
-        airsim.ImageRequest("0", airsim.ImageType.Scene),
-        airsim.ImageRequest("0", airsim.ImageType.DepthPlanner, True),
-        airsim.ImageRequest("0", airsim.ImageType.Infrared, False, False)
+        airsim.ImageRequest("front", airsim.ImageType.Scene),
+        airsim.ImageRequest("front", airsim.ImageType.DepthPlanner, True),
+        airsim.ImageRequest("front", airsim.ImageType.Infrared, False, False)
     ])
 
     # Check if there are enough semantic classes
@@ -128,12 +128,12 @@ while cnt < pointsToSample:
                     .format(cnt, len(np.unique(img_semantics))))
                 cnt = cnt - 1
                 break
-            img_semantics = airSimSemanticsConverter.mapInfraredToNyu(
+            img_semantics = airSimSemanticsConverter.map_infrared_to_nyu(
                 img_semantics)
 
             print(
                 "Classes in img:", ",".join([
-                    airSimSemanticsConverter.getNyuNameForNyuId(idx)
+                    airSimSemanticsConverter.get_nyu_name_for_nyu_id(idx)
                     for idx in np.unique(img_semantics)
                 ]))
             file_name = '{}_{:04d}.png'.format(

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
 Main Class that manages an embodied active learning experiments.
-First moves the drone to an initial position and then starts the planner and starts the data acquisitor
+First moves the drone to an initial position and then starts the planner
+and starts the data acquisitor
 """
 
 # ros
@@ -14,14 +15,14 @@ from embodied_active_learning.data_acquisitors import constant_rate_data_acquisi
 from embodied_active_learning.airsim_utils import semantics
 
 
-def getDataAcquisitior(params, semanticConverter):
+def getDataAcquisitior(params, semantic_converter):
     rospy.loginfo("Create Data Acquisitior for params: {}".format(str(params)))
     type = params.get("type", "constantSampler")
     if type == "constantSampler":
         return constant_rate_data_acquisitor.ConstantRateDataAcquisitor(
-            semanticConverter)
-    else:
-        raise ValueError("Invalid Data Sampler supplied:  {}".format(type))
+            semantic_converter)
+
+    raise ValueError("Invalid Data Sampler supplied:  {}".format(type))
 
 
 class ExperimentManager:
@@ -46,7 +47,7 @@ class ExperimentManager:
         z = rospy.get_param("/start_position/z", 0)
         yaw = rospy.get_param("/start_position/yaw", 0)
         self.initial_pose = [x, y, z, yaw]
-        self.airSimSemanticsConverter = semantics.AirSimSemanticsConverter(
+        self.air_sim_semantics_converter = semantics.AirSimSemanticsConverter(
             rospy.get_param("semantic_mapping_path",
                             "../../../cfg/airsim/semanticClasses.yaml"))
 
@@ -61,7 +62,7 @@ class ExperimentManager:
             try:
                 self.data_aquisitor = getDataAcquisitior(
                     rospy.get_param("/data_generation", {}),
-                    self.airSimSemanticsConverter)
+                    self.air_sim_semantics_converter)
             except ValueError as e:
                 rospy.logerr("Could not create data acquisitor.\n {}".format(
                     str(e)))
@@ -81,7 +82,7 @@ class ExperimentManager:
             return False
 
         rospy.loginfo("Setting semantic classes to NYU mode")
-        self.airSimSemanticsConverter.setAirsimClasses()
+        self.air_sim_semantics_converter.set_airsim_classes()
 
         rospy.loginfo("Taking off")
         self._takeoff_proxy(True)

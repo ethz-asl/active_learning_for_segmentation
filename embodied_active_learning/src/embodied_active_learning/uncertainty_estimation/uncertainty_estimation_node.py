@@ -3,19 +3,19 @@
 Node that takes an RGB input image and predicts semantic classes + uncertainties
 """
 
+import time
+from struct import pack, unpack
+
 # ros
 import rospy
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image, CameraInfo
-from sensor_msgs.msg import PointCloud2, PointField, Image
+from sensor_msgs.msg import PointCloud2, PointField, Image, CameraInfo
 from message_filters import ApproximateTimeSynchronizer, Subscriber
 
 import torch
 import numpy as np
 from matplotlib import cm
-import time
 
-from struct import pack, unpack
 from refinenet.models.resnet import rf_lw50, rf_lw101, rf_lw152
 from refinenet.utils.helpers import prepare_img
 import cv2
@@ -23,7 +23,7 @@ import cv2
 from uncertainty_estimator import SimpleSoftMaxEstimator
 
 
-def getUncertaintyEstimatorForParams(params):
+def get_uncertainty_estimator_for_params(params):
     """
     Returns an uncertainty estimator consisting of a segmentation network + ucnertainty estimation
     :param params: Params as they are stored in rosparams
@@ -53,7 +53,7 @@ def getUncertaintyEstimatorForParams(params):
         if has_cuda:
             net = net.cuda()
 
-        def predictImage(numpy_img, net=net, has_cuda=has_cuda):
+        def predict_image(numpy_img, net=net, has_cuda=has_cuda):
             orig_size = numpy_img.shape[:2][::-1]
             img_torch = torch.tensor(
                 prepare_img(numpy_img).transpose(2, 0, 1)[None]).float()
@@ -64,25 +64,48 @@ def getUncertaintyEstimatorForParams(params):
             # Resize image to target prediction
             return cv2.resize(pred, orig_size, interpolation=cv2.INTER_NEAREST)
 
-        model = predictImage
+        model = predict_image
 
     if model is None:
         raise ValueError("Could not find model for specified parameters")
 
     estimator = None
-    estimatorParams = params.get('method', {})
+    estimator_params = params.get('method', {})
 
-    if estimatorParams.get('type', 'softmax'):
+    if estimator_params.get('type', 'softmax'):
         rospy.loginfo(
             "Creating SimpleSoftMaxEstimator for uncertainty estimation")
         estimator = SimpleSoftMaxEstimator(model,
-                                           from_logits=estimatorParams.get(
+                                           from_logits=estimator_params.get(
                                                'from_logits', True))
 
     if estimator is None:
         raise ValueError("Could not find estimator for specified parameters")
 
     return estimator
+
+def depth_to_3d(img_depth, camera_info, distorted=False):
+    """ Create point cloud from depth image and camera infos. Returns a single array for x, y and z coords """
+    f, center_x, center_y = camera_info.K[0], camera_info.K[2], camera_info.K[
+        5]
+    width = camera_info.width
+    height = camera_info.height
+    img_depth = img_depth.reshape((height, width))
+    cols, rows = np.meshgrid(np.linspace(0, width - 1, num=width),
+                             np.linspace(0, height - 1, num=height))
+
+    # Process depth image from ray length to camera axis depth
+    if distorted:
+        distance = ((rows - center_y) ** 2 + (cols - center_x) ** 2) ** 0.5
+        points_z = img_depth / (1 + (distance / f) ** 2) ** 0.5
+    else:
+        points_z = img_depth
+
+    # Create x and y position
+    points_x = points_z * (cols - center_x) / f
+    points_y = points_z * (rows - center_y) / f
+
+    return points_x.reshape(-1), points_y.reshape(-1), points_z.reshape(-1)
 
 
 class UncertaintyManager:
@@ -106,12 +129,12 @@ class UncertaintyManager:
         '''  Initialize ros node and read params '''
         params = rospy.get_param("/uncertainty")
         try:
-            self.uncertainty_estimator = getUncertaintyEstimatorForParams(
+            self.uncertainty_estimator = get_uncertainty_estimator_for_params(
                 params)
         except ValueError as e:
             rospy.logerr(
-                "Could not load uncertainty estimator. Uncertainty estimator NOT running! \n Reason: {}"
-                .format(str(e)))
+                "Could not load uncertainty estimator. Uncertainty estimator NOT running! \n Reason: {}" .format(
+                    str(e)))
             rospy.logerr("Specified parameters: {}".format(str(params)))
             return
 
@@ -137,41 +160,18 @@ class UncertaintyManager:
         self._odom_sub = Subscriber("odometry", Odometry)
 
         self.last_request = rospy.get_rostime()
-        self.period = params.get('rate', 1)
+        self.period = params.get('rate', 2)
         self.num_classes = params['network'].get('classes', 40)
 
         ts = ApproximateTimeSynchronizer(
             [self._rgb_sub, self._depth_sub, self._camera_sub, self._odom_sub],
             queue_size=20,
-            slop=0.2,
+            slop=0.5,
             allow_headerless=True)
         ts.registerCallback(self.callback)
         rospy.loginfo("Uncertainty estimator running")
 
-    def depth_to_3d(self, img_depth, cameraInfo, distorted=False):
-        """ Create point cloud from depth image and camera infos. Returns a single array for x, y and z coords """
-        f, center_x, center_y = cameraInfo.K[0], cameraInfo.K[2], cameraInfo.K[
-            5]
-        width = cameraInfo.width
-        height = cameraInfo.height
-        img_depth = img_depth.reshape((height, width))
-        cols, rows = np.meshgrid(np.linspace(0, width - 1, num=width),
-                                 np.linspace(0, height - 1, num=height))
-
-        # Process depth image from ray length to camera axis depth
-        if distorted:
-            distance = ((rows - center_y)**2 + (cols - center_x)**2)**0.5
-            points_z = img_depth / (1 + (distance / f)**2)**0.5
-        else:
-            points_z = img_depth
-
-        # Create x and y position
-        points_x = points_z * (cols - center_x) / f
-        points_y = points_z * (rows - center_y) / f
-
-        return points_x.reshape(-1), points_y.reshape(-1), points_z.reshape(-1)
-
-    def callback(self, rgb_msg, depth_msg, camera, publishImages=True):
+    def callback(self, rgb_msg, depth_msg, camera, publish_images=False):
         """
         Publishes semantic segmentation + Pointcloud to ropstopics
 
@@ -181,16 +181,15 @@ class UncertaintyManager:
         :param rgb_msg: Image message with RGB image
         :param depth_msg:  Image message with depth image (MUST BE CV_32FC1)
         :param camera: Camera info
-        :param publishImages: if image messages should be published. If false only PC is published
+        :param publish_images: if image messages should be published. If false only PC is published
         :return: Nothing
         """
         if (rospy.get_rostime() - self.last_request).to_sec() < self.period:
             # Too early, go back to sleep :)
             return
-
         self.last_request = rospy.get_rostime()
         # Monitor executing time
-        startTime = time.time()
+        start_time = time.time()
         # Get Image from message data
         img = np.frombuffer(rgb_msg.data, dtype=np.uint8)
         # Depth image
@@ -200,18 +199,19 @@ class UncertaintyManager:
         img_shape = img.shape
 
         semseg, uncertainty = self.uncertainty_estimator.predict(img)
-        timeDiff = time.time() - startTime
-        print("segmented images in {:.4f}s, {:.4f} FPs".format(
-            timeDiff, 1 / timeDiff))
+        time_diff = time.time() - start_time
+        print(" ==> segmented images in {:.4f}s, {:.4f} FPs".format(
+            time_diff, 1 / time_diff))
 
-        (x, y, z) = self.depth_to_3d(img_depth, camera)
-        color = (uncertainty*254).astype(int).reshape(-1)
+        (x, y, z) = depth_to_3d(img_depth, camera)
+        color = (uncertainty * 254).astype(int).reshape(-1)
         packed = pack('%di' % len(color), *color)
         unpacked = unpack('%df' % len(color), packed)
-        data = (np.vstack([x, y, z,  np.array(unpacked)])).T
+        data = (np.vstack([x, y, z, np.array(unpacked)])).T
 
         pc_msg = PointCloud2()
         pc_msg.header.frame_id = rgb_msg.header.frame_id
+        pc_msg.header.stamp = rgb_msg.header.stamp
         pc_msg.width = data.shape[0]
         pc_msg.height = 1
         pc_msg.fields = [
@@ -227,7 +227,7 @@ class UncertaintyManager:
         pc_msg.data = np.float32(data).tostring()
         self._semseg_pc_pub.publish(pc_msg)
 
-        if publishImages:
+        if publish_images:
             # make RGB, use some nice colormaps:
             uncertainty = np.uint8(cm.seismic(uncertainty) *
                                    255)[:, :, 0:3]  # Remove alpha channel

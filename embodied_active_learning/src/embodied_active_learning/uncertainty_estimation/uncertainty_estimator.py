@@ -23,13 +23,13 @@ class SimpleSoftMaxEstimator:
         if self.from_logits:
             prediction = softmax(prediction, axis=-1)
 
-        semSeg = np.argmax(prediction, axis=-1).astype(np.uint8)
+        sem_seg = np.argmax(prediction, axis=-1).astype(np.uint8)
         # uncertainty defined as entropy
         uncertainty = -np.sum(prediction*np.log(prediction), axis=-1)
-        # entropy is upper bounded by 1/log(numClasses). Use this fact to ensure uncertainty is in [0,1]
-        uncertainty = uncertainty/np.log(semSeg.shape[-1])
+        # entropy is upper bounded by 1/log(num_classes). Use this fact to ensure uncertainty is in [0,1]
+        uncertainty = uncertainty/np.log(sem_seg.shape[-1])
 
-        return semSeg, uncertainty
+        return sem_seg, uncertainty
 
 
 def softmax(X, theta=1.0, axis=None):

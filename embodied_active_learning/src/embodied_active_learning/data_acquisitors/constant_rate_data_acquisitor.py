@@ -2,18 +2,20 @@
 Simple Data Acquisitor. Extracts visible camera images + semseg classes at constant frequency
 """
 
+import time
+import os
+
 import rospy
 from message_filters import ApproximateTimeSynchronizer, Subscriber
 from sensor_msgs.msg import Image
-import time
-import os
 import numpy as np
 from PIL import Image as PilImage
-
+from std_msgs.msg import Bool
 
 class ConstantRateDataAcquisitor:
+    """ Class that Samples Semantic+Depth+RGB images in a constant rate"""
 
-    def __init__(self, semanticConverter):
+    def __init__(self, semantic_converter):
         params = rospy.get_param("/data_generation", {})
 
         self.rate = params.get("rate", 1)
@@ -27,7 +29,7 @@ class ConstantRateDataAcquisitor:
         self.last_request = rospy.get_rostime()
 
         self.path = self.path + "/experiment_" + str(time.time())
-        self.semanticConverter = semanticConverter
+        self.semantic_converter = semantic_converter
 
         os.mkdir(self.path)
 
@@ -37,14 +39,18 @@ class ConstantRateDataAcquisitor:
             0.1,
             allow_headerless=True)
         ts.registerCallback(self.callback)
+        self.capture_pub = rospy.Publisher("/image_captured", Bool, queue_size=10)
         rospy.loginfo("Started ConstantRateDataAcquisitor")
 
     def callback(self, rgb_msg, depth_msg, semseg_msg):
         """ Saves te supplied rgb and semseg image as PNGs """
-
         if (rospy.get_rostime() - self.last_request).to_sec() < self.period:
             # Too early, go back to sleep :)
             return
+
+        b = Bool()
+        b.data = True
+        self.capture_pub.publish(b)
 
         self.last_request = rospy.get_rostime()
 
@@ -57,5 +63,5 @@ class ConstantRateDataAcquisitor:
         # Only take one channel, infrared has 3 channels with same information
         mask = np.frombuffer(semseg_msg.data, dtype=np.uint8).copy()
         mask = mask.reshape(semseg_msg.height, semseg_msg.width, 3)[:, :, 0]
-        PilImage.fromarray(self.semanticConverter.mapInfraredToNyu(mask)).save(
+        PilImage.fromarray(self.semantic_converter.map_infrared_to_nyu(mask)).save(
             "{}/{}_mask.png".format(self.path, ts))

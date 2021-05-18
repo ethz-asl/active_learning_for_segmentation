@@ -3,7 +3,7 @@ uncertainty:
     name: "lightweight-refinenet"
   method:
     type: "softmax"
-  rate: 0.5
+  rate: 2
 
 data_generation:
   type: "constantSampler"
@@ -11,10 +11,10 @@ data_generation:
   output_folder: "/home/rene/thesis/imgs"
 
 start_position:
-  x: -1
+  x: 0
   y: 0
   z: 0
-  yaw: 3.14
+  yaw: 0 #3.14
 
 minimap:
-  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/minimap.pickle"
+  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/map.pickle"

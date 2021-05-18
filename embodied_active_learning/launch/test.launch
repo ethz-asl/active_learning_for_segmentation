@@ -1,0 +1,14 @@
+<launch>
+
+
+
+<group ns="planner">
+
+    <node name = "bump_and_rotate_planner" pkg="embodied_active_learning" type="bump_and_rotate_planner_node.py">
+
+    </node>
+
+    </group>
+
+
+</launch>
