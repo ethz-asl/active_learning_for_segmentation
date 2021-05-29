@@ -103,14 +103,15 @@ for checkpoint in checkpoint_files:
     data = json.load(open(os.path.split(checkpoint)[-2] + "/args.json", 'r'))
     name = os.path.basename(data.get('train_path', "unknown")).replace("experiment_", "")
     n_imgs = data.get('num_imgs', -1)
-    entry_as_dict = {'planner': name, 'n_imgs': n_imgs}
+    entry_as_dict = {'cp': checkpoint, 'planner': name, 'n_imgs': n_imgs}
 
   network.eval()
 
   confusion = torch.zeros(40, 40)
-
+  network = network.cuda()
   if torch.cuda.is_available():
     confusion = confusion.cuda()
+    network = network.cuda()
 
   batches = len(testLoader)
   cnt = 0
@@ -142,4 +143,7 @@ for checkpoint in checkpoint_files:
   all_results.append(entry_as_dict)
 
 df = pd.DataFrame(all_results)
-df.to_csv('results_{}.csv'.format(time.time()))
+name = testsetFolder
+if name[-1] == "/":
+  name = name[:-1]
+df.to_csv('results_{}_{}.csv'.format(os.path.basename(name),time.time()))
