@@ -53,7 +53,7 @@ class DataLoader:
             super().__init__()
             self.img_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "img" in f or "rgb" in f])
             self.mask_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "mask" in f])
-
+            print("Creating dataloader with params: {},{},{},{},{}".format(folder_path, num_imgs, transform, limit_imgs, cpu_mode))
             if limit_imgs is not None and limit_imgs != 0:
                 self.img_files = self.img_files[::len(self.img_files)//limit_imgs]
                 self.mask_files = self.mask_files[::len(self.img_files)//limit_imgs]
