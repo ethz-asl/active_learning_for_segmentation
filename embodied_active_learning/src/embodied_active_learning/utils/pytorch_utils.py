@@ -118,3 +118,13 @@ class Transforms:
         def __call__(self, sample):
             sample[self.target_name] = sample[self.target_name].long()
             return sample
+
+    class AsDensetorchSample:
+        def __init__(self, names):
+            self.names = names
+
+        def __call__(self, sample):
+            sample['names'] = self.names
+            sample['image'] = (sample['image'].detach().numpy()*255).astype(np.uint8).transpose((1, 2, 0))
+            sample['mask'] = (sample['mask'].detach().numpy()).astype(np.uint8)
+            return sample
