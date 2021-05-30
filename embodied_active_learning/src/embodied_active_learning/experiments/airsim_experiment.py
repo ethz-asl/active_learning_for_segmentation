@@ -11,7 +11,7 @@ from std_srvs.srv import SetBool
 from airsim_ros_pkgs.srv import SetLocalPosition
 from airsim_ros_pkgs.srv import Takeoff
 
-from embodied_active_learning.data_acquisitors import constant_rate_data_acquisitor
+from embodied_active_learning.data_acquisitors import constant_rate_data_acquisitor, goalpoints_data_acquisitor
 from embodied_active_learning.airsim_utils import semantics
 
 
@@ -19,7 +19,10 @@ def getDataAcquisitior(params, semantic_converter):
     rospy.loginfo("Create Data Acquisitior for params: {}".format(str(params)))
     type = params.get("type", "constantSampler")
     if type == "constantSampler":
-        return constant_rate_data_acquisitor.ConstantRateDataAcquisitor(
+        return constant_rate_data_acquisitor.ConstantRateDataAcquisitor(params,
+            semantic_converter)
+    elif type =="goalpointSampler":
+        return goalpoints_data_acquisitor.GoalpointsDataAcquisitor(params,
             semantic_converter)
 
     raise ValueError("Invalid Data Sampler supplied:  {}".format(type))
@@ -49,7 +52,7 @@ class ExperimentManager:
         self.initial_pose = [x, y, z, yaw]
         self.air_sim_semantics_converter = semantics.AirSimSemanticsConverter(
             rospy.get_param("semantic_mapping_path",
-                            "../../../cfg/airsim/semanticClasses.yaml"))
+                            "../../../cfg/airsim/semanticClasses.yaml")) #semanticClassesCustomFlat
 
         self._takeoff_proxy = rospy.ServiceProxy(self.ns_airsim + "/" +
                                                  self.vehicle_name + "/takeoff",
@@ -60,9 +63,7 @@ class ExperimentManager:
 
         if self.launch_simulation():
             try:
-                self.data_aquisitor = getDataAcquisitior(
-                    rospy.get_param("/data_generation", {}),
-                    self.air_sim_semantics_converter)
+                self.data_aquisitors = [getDataAcquisitior(p, self.air_sim_semantics_converter) for p in rospy.get_param("/data_generation")]
             except ValueError as e:
                 rospy.logerr("Could not create data acquisitor.\n {}".format(
                     str(e)))

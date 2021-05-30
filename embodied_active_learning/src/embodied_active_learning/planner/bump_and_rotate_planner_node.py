@@ -54,7 +54,7 @@ class BumpAndRotatePlanner:
             translation=Point(
                 self.current_goal_x,
                 self.current_goal_y,
-                self.current_pose.position.z),
+                0),
             rotation=Quaternion(
                 q[0],
                 q[1],
@@ -67,12 +67,13 @@ class BumpAndRotatePlanner:
                     Twist()], rospy.Time(0)))
         self._trajectory_pub.publish(msg)
 
-    def sample_and_publish_next_trajectory(self, step=0.5):
+    def sample_and_publish_next_trajectory(self, step=0.2):
+        print("STEP IS", step)
         self.current_goal_x += step * math.cos(self.current_goal_yaw)
         self.current_goal_y += step * math.sin(self.current_goal_yaw)
         self.publish_goal()
 
-    def collision_callback(self, collision_message, step=0.3):
+    def collision_callback(self, collision_message, step=0.2):
         if not self.running:
             return
 
@@ -92,8 +93,15 @@ class BumpAndRotatePlanner:
         if self.collision_count >= 20:
             print(
                 "[COLLIDED COUNT] Collision count is bigger than 20. Going to rerun backtracker again")
-            self.collision_count = 0
+
             self.collided = False
+            self.force_replan = True
+        if self.collision_count >= 100:
+            print("Severe collision error. Going to move back to origin")
+            self.collision_count = 0
+            self.current_goal_x = 0
+            self.current_goal_y = 0
+            self.current_goal_yaw = 0
             self.force_replan = True
 
     def callback(self, odom_msg):
@@ -111,15 +119,18 @@ class BumpAndRotatePlanner:
             if self.collided:
                 self.current_goal_yaw = random.random() * 2 * math.pi - math.pi
             else:
+                print("RESAMPLING")
                 self.sample_and_publish_next_trajectory()
                 self.collision_count = 0
             print("[MOVING] Going to publish next goal {:.4f},{:.4f},{:.4f}".format(
                 self.current_goal_x, self.current_goal_y, self.current_goal_yaw))
             self.force_replan = False
             self.collided = False
+            self.collision_count  = 0
 
 
 if __name__ == '__main__':
     rospy.init_node('bump_and_rotate_planner_node', anonymous=True)
     planner = BumpAndRotatePlanner()
+    print("BUM ROATE NODE")
     rospy.spin()

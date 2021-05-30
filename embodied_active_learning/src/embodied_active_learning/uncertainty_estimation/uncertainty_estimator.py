@@ -1,4 +1,27 @@
 import numpy as np
+import embodied_active_learning.airsim_utils.semantics as semantics
+
+class GroundTruthErrorEstimator:
+    def __init__(self, model, semantics_converter : semantics.AirSimSemanticsConverter):
+        """
+        :param model: Function that maps an input numpy array to on output numpy array
+        """
+        self.model = model
+        self.semantics_converter = semantics_converter;
+
+    def predict(self, image, gt_image):
+        """
+        :arg image: numpy array of dimensions [height, width, batch]
+        :return: Tuple:
+            First: Semantic Image [height,width, batch] np.uint8
+            Second: Error Image [height, width, batch] float [0,1]
+        """
+        prediction = self.model(image)
+        gt_image = self.semantics_converter.map_infrared_to_nyu(gt_image)
+        sem_seg = np.argmax(prediction, axis=-1).astype(np.uint8)
+        error = (sem_seg != gt_image).astype(np.float)
+
+        return sem_seg, error
 
 
 class SimpleSoftMaxEstimator:
@@ -11,7 +34,7 @@ class SimpleSoftMaxEstimator:
         self.model = model
         self.from_logits = from_logits
 
-    def predict(self, image):
+    def predict(self, image, gt_image):
         """
         :arg image: numpy array of dimensions [height, width, batch]
         :return: Tuple:

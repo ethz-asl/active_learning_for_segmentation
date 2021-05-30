@@ -18,11 +18,11 @@ map:
   type: "VoxbloxMap"
 
 system_constraints:
-  v_max: 5.0
-  a_max: 5.0
-  yaw_rate_max: 3.6
-  yaw_accel_max: 3.6
-  collision_radius: 0.5
+  v_max: 2.0
+  a_max: 2.0
+  yaw_rate_max: 2.6
+  yaw_accel_max: 2.6
+  collision_radius: 0.6
 
 trajectory_generator:
   collision_optimistic: false
@@ -44,6 +44,7 @@ trajectory_generator:
   semilocal_sampling_count: 10
   semilocal_sampling_radius_max: 1.5
   semilocal_sampling_radius_min: 1.5
+  planar: true
 
   rewire_root: true
   rewire_intermediate: true

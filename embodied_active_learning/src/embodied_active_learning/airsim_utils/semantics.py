@@ -20,7 +20,7 @@ class AirSimSemanticsConverter:
         for _class in self.yaml_config['classMappings']:
             self.nyu_id_to_name[_class['classId']] = _class['className']
 
-    def set_airsim_classes(self, debug=False):
+    def set_airsim_classes(self, debug=True):
         """ Sets all class IDs in the Airsim environment to NYU classes """
 
         import airsim
@@ -33,7 +33,8 @@ class AirSimSemanticsConverter:
             ".*", 39, True)  # Set otherpro as default class for everything
 
         for _class in self.yaml_config['classMappings']:
-            if _class['regex'] != ['']:
+            if _class.get('regex', [None]) != [None]:
+                print(_class.get('regex', None))
                 if debug:
                     class_and_id = "{:<20}".format("{}({})".format(
                         _class['className'], _class['classId']))

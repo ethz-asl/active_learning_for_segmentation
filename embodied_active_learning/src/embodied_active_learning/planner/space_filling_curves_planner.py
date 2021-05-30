@@ -41,6 +41,7 @@ class SpaceFillingCurvesPlanner:
         self.x = 0
         self.running = False
         self.forceReplan = True
+        self.collided = False
         self.y = 0
 
         self.map_rgb = map_struct['map'].astype(np.uint8)
@@ -76,10 +77,7 @@ class SpaceFillingCurvesPlanner:
     def publishGoal(self):
         msg = MultiDOFJointTrajectory()
         msg.header.frame_id = "world"
-        q = tf.transformations.quaternion_from_euler(0, 0, self.lastYaw)
-        self.lastYaw += 3.1415 / 10
-        if self.lastYaw >= 2 * math.pi:
-            self.lastYaw = -math.pi
+
 
         nextPoint = self.trajectory[self.trajectoryIdx]
         self.trajectoryIdx += 1
@@ -90,15 +88,26 @@ class SpaceFillingCurvesPlanner:
         z = 0
 
         print("NEXT GOAL: {},{} (top,left) {},{}".format(self.x, self.y, nextPoint[0], nextPoint[1]))
+
+        yaw = 0
+        dx = self.x - self.currentPose.position.x
+        dy = self.y - self.currentPose.position.y
+        yaw = math.atan2(dy,dx)
+        q = tf.transformations.quaternion_from_euler(0, 0, yaw)
+
         transforms = Transform(translation=Point(self.x,self.y,z),
                                rotation=Quaternion(q[0], q[1], q[2], q[3]))
         msg.points.append(MultiDOFJointTrajectoryPoint([transforms], [Twist()], [Twist()], rospy.Time(0)))
+        self.collided = False
         self._trajectory_pub.publish(msg)
 
     def collisionCallback(self, collisionMessage, step=0.3):
         if not self.running:
             return
         print("[COLLIDED].")
+        if not self.collided:
+            self.publishGoal()
+        self.collided = True
         # self.publishGoal()
 
     def callback(self, odomMsg):

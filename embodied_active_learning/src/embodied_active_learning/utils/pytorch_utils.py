@@ -49,10 +49,15 @@ def semseg_accum_confusion_to_iou(confusion_accum, ignore_zero = False):
 
 class DataLoader:
     class DataLoaderSegmentation(torchData.Dataset):
-        def __init__(self, folder_path, num_imgs = None, transform = None, cpu_mode = False):
+        def __init__(self, folder_path, num_imgs = None, transform = None, limit_imgs = None, cpu_mode = False):
             super().__init__()
             self.img_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "img" in f or "rgb" in f])
             self.mask_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "mask" in f])
+
+            if limit_imgs is not None:
+                self.img_files = self.img_files[::len(self.img_files)//self.limit_imgs]
+                self.mask_files = self.mask_files[::len(self.img_files)//self.limit_imgs]
+                print("[DATALOADER] limited images to {}".format(len(self.mask_files)))
 
             if (num_imgs is not None):
                 print("[DATALOADER] going to limit images to {}".format(num_imgs))

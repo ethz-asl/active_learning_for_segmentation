@@ -15,9 +15,7 @@ from std_msgs.msg import Bool
 class ConstantRateDataAcquisitor:
     """ Class that Samples Semantic+Depth+RGB images in a constant rate"""
 
-    def __init__(self, semantic_converter):
-        params = rospy.get_param("/data_generation", {})
-
+    def __init__(self, params, semantic_converter):
         self.rate = params.get("rate", 1)
         self.path = params.get("output_folder", "/tmp")
         self.period = 1 / self.rate
@@ -28,7 +26,7 @@ class ConstantRateDataAcquisitor:
 
         self.last_request = rospy.get_rostime()
 
-        self.path = self.path + "/experiment_" + str(time.time())
+        self.path = self.path + "/" + rospy.get_param("/experiment_name", "experiment") + "_" + str(time.time())
         self.semantic_converter = semantic_converter
 
         os.mkdir(self.path)

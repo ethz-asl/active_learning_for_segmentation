@@ -2,6 +2,8 @@
 Samples a certain amount of random viewpoints and stores the RGBD Images + GT Semantic Classes
 """
 import pickle
+import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -11,8 +13,20 @@ import airsim
 import os
 import time
 import argparse
+import tf
 
 from embodied_active_learning.airsim_utils import semantics
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 parser = argparse.ArgumentParser(
     description='Creates test set with random images from environment')
@@ -25,12 +39,24 @@ parser.add_argument(
     help='Minimal amount of semantic classes in an image in order to be saved',
     default=4,
     type=int)
+
+parser.add_argument("--sample_z", help = "Sample z", type=str2bool, nargs='?',
+                        const=True, default=False)
+
+parser.add_argument("--sample_pitch", help = "Sample pitch", type=str2bool, nargs='?',
+                        const=True, default=False)
+
 parser.add_argument('--out_folder',
                     help='Output folder where images should be saved',
-                    default="/home/rene/thesis/test_data",
+                    default="/home/rene/thesis/test_data_new",
                     type=str)
 parser.add_argument('--map',
                     help='Path to map.pickle file',
+                    default="scripts/map_generation/map.pickle",
+                    type=str)
+
+parser.add_argument('--minimap',
+                    help='Path to minimap.pickle file',
                     default="scripts/map_generation/map.pickle",
                     type=str)
 
@@ -66,8 +92,10 @@ lineType = 2
 
 map_struct = pickle.load(open(args.map, "rb"))
 map_occupied = map_struct['map']  # Binary map
-map_rgb = np.stack([(map_occupied == 0) * 255 for i in range(3)],
-                   axis=-1).astype(np.uint8)  # Black White 3 channel image
+map_rgb = pickle.load(open(args.minimap, "rb"))['map']
+if map_rgb.shape[-1] != 3:
+    map_rgb = np.stack([(map_rgb == 0) * 255 for i in range(3)],
+                       axis=-1).astype(np.uint8)  # Black White 3 channel image
 lengthPerPixel = map_struct['dimensions'][
     'lengthPerPixel']  # Conversion from pixel to meters in unreal
 top_start, left_start = map_struct['start']['top'], map_struct['start'][
@@ -95,6 +123,7 @@ while cnt < pointsToSample:
         yaw = np.random.rand() * 2 * math.pi
         break
 
+    time.sleep(5.1)  # Just to be sure :)
     y = -(top_start - top) * lengthPerPixel
     x = -(left_start - left) * lengthPerPixel
     currPose.position.x_val = x
@@ -104,8 +133,19 @@ while cnt < pointsToSample:
     currPose.orientation.y_val = 0
     currPose.orientation.z_val = np.sin(yaw / 2)
     currPose.orientation.w_val = np.cos(yaw / 2)
+
+    if args.sample_z:
+        currPose.position.z_val = np.random.rand() * 1.5 - 1.5
+    if args.sample_pitch:
+
+        pitch = -np.random.rand() * 0.5 * math.pi + 0.25*math.pi
+        (x,y,z,w) = tf.transformations.quaternion_from_euler(0, pitch, yaw)
+        currPose.orientation.x_val = x
+        currPose.orientation.y_val = y
+        currPose.orientation.z_val = z
+        currPose.orientation.w_val = w
+
     client.simSetVehiclePose(currPose, True)
-    time.sleep(0.1)  # Just to be sure :)
 
     responses = client.simGetImages([
         airsim.ImageRequest("front", airsim.ImageType.Scene),

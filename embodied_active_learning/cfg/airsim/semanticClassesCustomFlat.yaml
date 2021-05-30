@@ -1,0 +1,368 @@
+---
+classMappings:
+  -
+    classId: 0
+    className: "wall"
+    regex:
+      - SM_Kitchen_KNOXHULT_Tile_.*
+      - Walls_StaticMesh.*
+  -
+    classId: 1
+    className: "floor"
+    regex:
+      - Floor_StaticMesh.*
+  -
+    classId: 2
+    className: "cabinet"
+    regex:
+      - SM_Kitchen_KNOXHULT_FloorCabinet_Boxes.*
+      - SM_Kitchen_KNOXHULT_FloorCabinet_Doors.*
+      - SM_Kitchen_KNOXHULT_FloorCabinet_TableTop.*
+      - SM_Kitchen_KNOXHULT_WallCabinet_Boxes.*
+      - SM_Kitchen_KNOXHULT_WallCabinet_Doors.*
+  -
+    classId: 3
+    className: "bed"
+    regex:
+      - EdithRoomBed_a_.*
+      - SM_Bed_.*
+  -
+    classId: 4
+    className: "chair"
+    regex:
+      - Armchair_dense_\w*
+      - BP_Kitchen_Chair_.*
+      - BP_Office_Chair_.*
+  -
+    classId: 5
+    className: "sofa"
+    regex:
+      - SM_Sofa_.*
+  -
+    classId: 6
+    className: "table"
+    regex:
+      - EdithLivingRoomTable_.*
+      - SM_Table_Lisabo_01_.*
+  -
+    classId: 7
+    className: "door"
+    regex:
+      - BP_door.*
+      - SM_Door_.*
+      - SM_frame_door.*
+      - SM_handleMetal.*
+  - classId: 8
+    className: "window"
+    regex:
+      - Ground_.*
+      - SM_window.*
+      - pr_background_mountain_a_4_summer_.*
+  -
+    classId: 9
+    className: "bookshelf"
+    regex:
+      -
+  -
+    classId: 10
+    className: "picture"
+    regex:
+      - BP_Picture_.*
+      - EdithPhoto_a_.*
+      - SM_Picture_.*
+  -
+    classId: 11
+    className: "counter"
+    regex:
+      -
+  -
+    classId: 12
+    className: "blinds"
+    regex:
+      -
+  -
+    classId: 13
+    className: "desk"
+    regex:
+      - SM_Table_02_200
+      - SM_Table_3
+  -
+    classId: 14
+    className: "shelves"
+    regex:
+      - SM_BoxDoorKallax_.*
+      - SM_Metal_Rack_.*
+      - SM_RackKallax_.*
+      - SM_Rack_4x2_.*
+  -
+    classId: 15
+    className: "curtain"
+    regex:
+      - SM_Curtain_.*
+  -
+    classId: 16
+    className: "dresser"
+    regex:
+      - DawnDresser_.*
+      - DresserWood_.*
+      - SM_P1sh12.*
+  -
+    classId: 17
+    className: "pillow"
+    regex:
+      - SM_Pillow_.*
+  -
+    classId: 18
+    className: "mirror"
+    regex:
+      - SM_Mirror_.*
+  -
+    classId: 19
+    className: "floor mat"
+    regex:
+      - BP_Bath_Carpet_.*
+      - SM_Bath_Carpet_.*
+      - SM_Carpet_.*
+  -
+    classId: 20
+    className: "clothes"
+    regex:
+      -
+  -
+    classId: 21
+    className: "ceiling"
+    regex:
+      - Ceiling_StaticMesh
+  -
+    classId: 22
+    className: "books"
+    regex:
+      - SM_Stack_of_Books_.*
+  -
+    classId: 23
+    className: "refridgerator"
+    regex:
+      - SM_Refregerator_.*
+  -
+    classId: 24
+    className: "television"
+    regex:
+      - SM_Wall_TV_.*
+  -
+    classId: 25
+    className: "paper"
+    regex:
+      -
+  -
+    classId: 26
+    className: "towel"
+    regex:
+      - SM_Towel_03_.*
+  -
+    classId: 27
+    className: "shower curtain"
+    regex:
+      -
+  -
+    classId: 28
+    className: "box"
+    regex:
+      - SM_Box.*
+      - SM_BoxDrena_.*
+      - SM_BoxFiella_.*
+      - SM_BoxTiena_.*
+      - SM_Box_.*
+  -
+    classId: 29
+    className: "whiteboard"
+    regex:
+      -
+  -
+    classId: 30
+    className: "person"
+    regex:
+      -
+  -
+    classId: 31
+    className: "night stand"
+    regex:
+      - SM_Bed_table_.*
+      - SM_Nightstand_.*
+  -
+    classId: 32
+    className: "toilet"
+    regex:
+      - SM_Toilet_\d.*
+  -
+    classId: 33
+    className: "sink"
+    regex:
+      - SM_BathroomSinkMixer_.*
+      - SM_Kitchen_KNOXHULT_Sink.*
+      - SM_Washbasin_.*
+  -
+    classId: 34
+    className: "lamp"
+    regex:
+      - BP_TableLamp_.*
+      - BP_WallLamp_.*
+      - BP_lamp_.*
+      - SM_Floor_Lamp_.*
+      - SM_Kitchen_KNOXHULT_Lamps.*
+      - SM_Light_ALENG.*
+      - SM_Light_Hektar_.*
+      - SM_Light_MEZOSPHERE.*
+      - SM_Marker_01_SM_Marker_.*
+  -
+    classId: 35
+    className: "bathtub"
+    regex:
+      - SM_Bath_.*
+  -
+    classId: 36
+    className: "bag"
+    regex:
+      -
+  -
+    classId: 37
+    className: "otherstructure"
+    regex:
+      - SM_Kitchen_KNOXHULT_Exhaust_Hood.*
+  -
+    classId: 38
+    className: "otherfurniture"
+    regex:
+      - SM_BakeOven_.*
+      - SM_Branas_.*
+      - SM_WashingMachine_.*
+      - Shoe_shelf_Hemnes.*
+  -
+    classId: 39
+    className: "otherprop"
+    regex:
+      - BP_Monitor_.*
+      - ChineseFoodBox_A_.*
+      - Fiddle_a_.*
+      - FloorBottle_c_.*
+      - SM_Bowl_.*
+      - SM_Cloth_.*
+      - SM_Coat_hanger_.*
+      - SM_Cosmetics_.*
+      - SM_Cup_.*
+      - SM_Cuttingboard_.*
+      - SM_Decor_.*
+      - SM_Digital_Clock.*
+      - SM_GrassBox.*
+      - SM_Hanger_.*
+      - SM_Jar.*
+      - SM_Journal_.*
+      - SM_Keyboard_.*
+      - SM_Knives_Stand_Hivla_.*
+      - SM_Laundry_Basket_.*
+      - SM_Notebook_01_.*
+      - SM_Pen_Stand_Tiera_.*
+      - SM_Plant_.*
+      - SM_Plate_.*
+      - SM_Printer_.*
+      - SM_RecycleBin_.*
+      - SM_Remote_.*
+      - SM_Shower_01_SM_Shower_.*
+      - SM_Spice_jar.*
+      - SM_Stand.*
+      - SM_TVSet_SM_MailUnitBdv.*
+      - SM_TVSet_SM_SurroundSpeakers.*
+      - SM_TVSet_SM_centerpeaker.*
+      - SM_TVSet_SM_subwoofer.*
+      - SM_Table_Decor_.*
+      - SM_ToiletPaper_02_.*
+      - SM_Toiletbrush_03_.*
+      - SM_Tool_.*
+      - SM_Tools.*
+      - SM_ToothbrushHolder_02_.*
+      - SM_Yukke_Watch.*
+      - WateringCan_.*
+
+airsimInfraredToNyu:
+  0: 0
+  13: 1
+  22: 2
+  28: 3
+  34: 4
+  38: 5
+  42: 6
+  46: 7
+  50: 8
+  53: 9
+  56: 10
+  59: 11
+  61: 12
+  64: 13
+  66: 14
+  69: 15
+  71: 16
+  73: 17
+  75: 18
+  77: 19
+  79: 20
+  81: 21
+  83: 22
+  85: 23
+  86: 24
+  88: 25
+  90: 26
+  91: 27
+  93: 28
+  95: 29
+  96: 30
+  98: 31
+  99: 32
+  101: 33
+  102: 34
+  104: 35
+  105: 36
+  106: 37
+  108: 38
+  109: 39
+
+nyuToAirsimInfrared:
+  0: 0
+  1: 13
+  2: 22
+  3: 28
+  4: 34
+  5: 38
+  6: 42
+  7: 46
+  8: 50
+  9: 53
+  10: 56
+  11: 59
+  12: 61
+  13: 64
+  14: 66
+  15: 69
+  16: 71
+  17: 73
+  18: 75
+  19: 77
+  20: 79
+  21: 81
+  22: 83
+  23: 85
+  24: 86
+  25: 88
+  26: 90
+  27: 91
+  28: 93
+  29: 95
+  30: 96
+  31: 98
+  32: 99
+  33: 101
+  34: 102
+  35: 104
+  36: 105
+  37: 106
+  38: 108
+  39: 109
+

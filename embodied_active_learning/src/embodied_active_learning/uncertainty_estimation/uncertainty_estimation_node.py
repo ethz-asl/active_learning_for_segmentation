@@ -20,7 +20,8 @@ from refinenet.models.resnet import rf_lw50, rf_lw101, rf_lw152
 from refinenet.utils.helpers import prepare_img
 import cv2
 
-from uncertainty_estimator import SimpleSoftMaxEstimator
+from uncertainty_estimator import SimpleSoftMaxEstimator, GroundTruthErrorEstimator
+import embodied_active_learning.airsim_utils.semantics as semantics
 
 
 def get_uncertainty_estimator_for_params(params):
@@ -71,14 +72,18 @@ def get_uncertainty_estimator_for_params(params):
 
     estimator = None
     estimator_params = params.get('method', {})
-
-    if estimator_params.get('type', 'softmax'):
+    estimator_type =  estimator_params.get('type', 'softmax')
+    if estimator_type == "softmax":
         rospy.loginfo(
             "Creating SimpleSoftMaxEstimator for uncertainty estimation")
         estimator = SimpleSoftMaxEstimator(model,
                                            from_logits=estimator_params.get(
                                                'from_logits', True))
 
+    elif estimator_type == "gt_error":
+        rospy.loginfo(
+            "Creating GroundTruthError for uncertainty estimation")
+        estimator = GroundTruthErrorEstimator(model, params['air_sim_semantics_converter']);
     if estimator is None:
         raise ValueError("Could not find estimator for specified parameters")
 
@@ -128,6 +133,10 @@ class UncertaintyManager:
     def __init__(self):
         '''  Initialize ros node and read params '''
         params = rospy.get_param("/uncertainty")
+        self.air_sim_semantics_converter = semantics.AirSimSemanticsConverter(
+            rospy.get_param("semantic_mapping_path",
+                            "../../../cfg/airsim/semanticClasses.yaml"))
+        params['air_sim_semantics_converter'] = self.air_sim_semantics_converter;
         try:
             self.uncertainty_estimator = get_uncertainty_estimator_for_params(
                 params)
@@ -156,6 +165,7 @@ class UncertaintyManager:
 
         self._rgb_sub = Subscriber("rgbImage", Image)
         self._depth_sub = Subscriber("depthImage", Image)
+        self._semseg_gt_sub = Subscriber("semsegGtImage", Image)
         self._camera_sub = Subscriber("cameraInfo", CameraInfo)
         self._odom_sub = Subscriber("odometry", Odometry)
 
@@ -164,14 +174,14 @@ class UncertaintyManager:
         self.num_classes = params['network'].get('classes', 40)
 
         ts = ApproximateTimeSynchronizer(
-            [self._rgb_sub, self._depth_sub, self._camera_sub, self._odom_sub],
+            [self._rgb_sub, self._depth_sub, self._camera_sub, self._semseg_gt_sub],
             queue_size=20,
             slop=0.5,
             allow_headerless=True)
         ts.registerCallback(self.callback)
         rospy.loginfo("Uncertainty estimator running")
 
-    def callback(self, rgb_msg, depth_msg, camera, publish_images=False):
+    def callback(self, rgb_msg, depth_msg, camera, gt_img_msg, publish_images=True):
         """
         Publishes semantic segmentation + Pointcloud to ropstopics
 
@@ -194,11 +204,14 @@ class UncertaintyManager:
         img = np.frombuffer(rgb_msg.data, dtype=np.uint8)
         # Depth image
         img_depth = np.frombuffer(depth_msg.data, dtype=np.float32)
+        #
+        img_gt =  np.frombuffer(gt_img_msg.data, dtype=np.uint8)
+        img_gt = img_gt.reshape(rgb_msg.height, rgb_msg.width, 3)[:,:,0]
         # Convert BGR to RGB
         img = img.reshape(rgb_msg.height, rgb_msg.width, 3)[:, :, [2, 1, 0]]
         img_shape = img.shape
 
-        semseg, uncertainty = self.uncertainty_estimator.predict(img)
+        semseg, uncertainty = self.uncertainty_estimator.predict(img, img_gt.copy())
         time_diff = time.time() - start_time
         print(" ==> segmented images in {:.4f}s, {:.4f} FPs".format(
             time_diff, 1 / time_diff))
