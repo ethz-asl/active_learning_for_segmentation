@@ -55,8 +55,8 @@ class DataLoader:
             self.mask_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "mask" in f])
 
             if limit_imgs is not None:
-                self.img_files = self.img_files[::len(self.img_files)//self.limit_imgs]
-                self.mask_files = self.mask_files[::len(self.img_files)//self.limit_imgs]
+                self.img_files = self.img_files[::len(self.img_files)//limit_imgs]
+                self.mask_files = self.mask_files[::len(self.img_files)//limit_imgs]
                 print("[DATALOADER] limited images to {}".format(len(self.mask_files)))
 
             if (num_imgs is not None):
