@@ -45,6 +45,8 @@ parser.add_argument("--sample_z", help = "Sample z", type=str2bool, nargs='?',
 
 parser.add_argument("--sample_pitch", help = "Sample pitch", type=str2bool, nargs='?',
                         const=True, default=False)
+parser.add_argument("--sample_roll", help = "Sample roll", type=str2bool, nargs='?',
+                        const=True, default=False)
 
 parser.add_argument('--out_folder',
                     help='Output folder where images should be saved',
@@ -123,7 +125,6 @@ while cnt < pointsToSample:
         yaw = np.random.rand() * 2 * math.pi
         break
 
-    time.sleep(5.1)  # Just to be sure :)
     y = -(top_start - top) * lengthPerPixel
     x = -(left_start - left) * lengthPerPixel
     currPose.position.x_val = x
@@ -137,9 +138,12 @@ while cnt < pointsToSample:
     if args.sample_z:
         currPose.position.z_val = np.random.rand() * 1.5 - 1.5
     if args.sample_pitch:
+        roll = 0
+        if args.sample_roll:
+            roll = -np.random.rand() * 0.5 * math.pi + 0.25*math.pi
 
         pitch = -np.random.rand() * 0.5 * math.pi + 0.25*math.pi
-        (x,y,z,w) = tf.transformations.quaternion_from_euler(0, pitch, yaw)
+        (x,y,z,w) = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
         currPose.orientation.x_val = x
         currPose.orientation.y_val = y
         currPose.orientation.z_val = z
@@ -147,12 +151,16 @@ while cnt < pointsToSample:
 
     client.simSetVehiclePose(currPose, True)
 
+    time.sleep(0.5)
+
     responses = client.simGetImages([
         airsim.ImageRequest("front", airsim.ImageType.Scene),
         airsim.ImageRequest("front", airsim.ImageType.DepthPlanner, True),
         airsim.ImageRequest("front", airsim.ImageType.Infrared, False, False)
     ])
 
+    cnt += 1
+    validImage = True
     # Check if there are enough semantic classes
     for response in responses:
         if response.image_type == 7:  # infrared (Semantics are encoded as infrared value)
@@ -167,7 +175,9 @@ while cnt < pointsToSample:
                     "Image #{} did not have enough semantic classes ({})\n Going to request another pose"
                     .format(cnt, len(np.unique(img_semantics))))
                 cnt = cnt - 1
+                validImage = False
                 break
+
             img_semantics = airSimSemanticsConverter.map_infrared_to_nyu(
                 img_semantics)
 
@@ -192,6 +202,8 @@ while cnt < pointsToSample:
                                          (255, 0, 0), 10)
             previewImg = cv2.putText(previewImg, str(cnt), (start[1], start[0]),
                                      font, fontScale, fontColor, lineType)
+    if not validImage:
+        continue
 
     # Now we know, that there are enough semantic classes, save rgb + depth too
     for response in responses:
@@ -208,8 +220,9 @@ while cnt < pointsToSample:
                     outputFolder, './{}_{:04d}.png'.format(
                         typeToName[str(response.image_type)], cnt)),
                 response.image_data_uint8)
+            print("Saved airsim image {}_{:04d}.png".format(
+                        typeToName[str(response.image_type)], cnt))
 
-    cnt += 1
 
 Image.fromarray(previewImg).save(
     os.path.join(outputFolder, 'selected_poses.png'))

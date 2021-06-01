@@ -7,7 +7,7 @@ def testSemantics():
     Than copy the output to the desired yaml file
     """
 
-    availableMeshes = "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/airsim_semantic_mapping/available_classes.yaml"
+    availableMeshes = "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/airsim_semantic_mapping/available_classes_flat.yaml"
     pathToAirsimMapping = '/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClassesCustomFlat.yaml'
 
     matched_print = []
@@ -20,6 +20,7 @@ def testSemantics():
         client.confirmConnection()
         names = client.simListSceneObjects(r"[\w]*")
         meshes = [str(name) for name in names]
+        meshes = yaml.load(open(availableMeshes, "r"), Loader=yaml.FullLoader)['classes']
 
         for meshName in meshes:
             found = False

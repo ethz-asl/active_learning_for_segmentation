@@ -5,34 +5,38 @@ classMappings:
     className: "wall"
     regex:
       - SM_Kitchen_KNOXHULT_Tile_.*
+      - SM_Kitchen_Fur_Tile_2
       - Walls_StaticMesh.*
   -
     classId: 1
     className: "floor"
     regex:
       - Floor_StaticMesh.*
+      - TemplateFloor
   -
     classId: 2
     className: "cabinet"
     regex:
-      - SM_Kitchen_KNOXHULT_FloorCabinet_Boxes.*
-      - SM_Kitchen_KNOXHULT_FloorCabinet_Doors.*
-      - SM_Kitchen_KNOXHULT_FloorCabinet_TableTop.*
-      - SM_Kitchen_KNOXHULT_WallCabinet_Boxes.*
-      - SM_Kitchen_KNOXHULT_WallCabinet_Doors.*
+      - SM_Kitchen_Fur_FloorCabinet_Boxes
+      - SM_Kitchen_Fur_FloorCabinet_Boxes
+      - SM_Kitchen_Fur_FloorCabinet_TableTop
+      - SM_Kitchen_Fur_WallCabinet_Boxes
+      - SM_Kitchen_Fur_WallCabinet_Doors
+      - SM_Kitchen_Fur_FloorCabinet_Doors
   -
     classId: 3
     className: "bed"
     regex:
-      - EdithRoomBed_a_.*
+      - EdithRoomBed_a
       - SM_Bed_.*
   -
     classId: 4
     className: "chair"
     regex:
-      - Armchair_dense_\w*
-      - BP_Kitchen_Chair_.*
-      - BP_Office_Chair_.*
+      - Armchair_dense\w*
+      - SM_Kitchen_Chair_.*
+      - SM_Office_Chair_.*
+      - SM_Chair
   -
     classId: 5
     className: "sofa"
@@ -42,14 +46,16 @@ classMappings:
     classId: 6
     className: "table"
     regex:
-      - EdithLivingRoomTable_.*
-      - SM_Table_Lisabo_01_.*
+      - EdithLivingRoomTable.*
+      - SM_Table_Lisabo_.*
+      - SM_Table_.*
   -
     classId: 7
     className: "door"
     regex:
-      - BP_door.*
+      - SM_door.*
       - SM_Door_.*
+      - SM_MainDoor_\d*
       - SM_frame_door.*
       - SM_handleMetal.*
   - classId: 8
@@ -57,7 +63,7 @@ classMappings:
     regex:
       - Ground_.*
       - SM_window.*
-      - pr_background_mountain_a_4_summer_.*
+      - pr_background_mountain_a_4_summer.*
   -
     classId: 9
     className: "bookshelf"
@@ -67,8 +73,9 @@ classMappings:
     classId: 10
     className: "picture"
     regex:
-      - BP_Picture_.*
+      - SM_Picture_.*
       - EdithPhoto_a_.*
+      - EdithPhoto_a
       - SM_Picture_.*
   -
     classId: 11
@@ -92,8 +99,7 @@ classMappings:
     regex:
       - SM_BoxDoorKallax_.*
       - SM_Metal_Rack_.*
-      - SM_RackKallax_.*
-      - SM_Rack_4x2_.*
+      - SM_Rack_\dx\d.*
   -
     classId: 15
     className: "curtain"
@@ -120,8 +126,9 @@ classMappings:
     classId: 19
     className: "floor mat"
     regex:
-      - BP_Bath_Carpet_.*
       - SM_Bath_Carpet_.*
+      - SM_Bath_Carpet_.*
+      - SM_BathCarpet_.*
       - SM_Carpet_.*
   -
     classId: 20
@@ -157,7 +164,7 @@ classMappings:
     classId: 26
     className: "towel"
     regex:
-      - SM_Towel_03_.*
+      - SM_Towel_03.*
   -
     classId: 27
     className: "shower curtain"
@@ -169,8 +176,10 @@ classMappings:
     regex:
       - SM_Box.*
       - SM_BoxDrena_.*
+      - SM_RackBox_.*
       - SM_BoxFiella_.*
       - SM_BoxTiena_.*
+      - SM_RackBox_0\d*
       - SM_Box_.*
   -
     classId: 29
@@ -199,19 +208,24 @@ classMappings:
     regex:
       - SM_BathroomSinkMixer_.*
       - SM_Kitchen_KNOXHULT_Sink.*
+      - SM_Kitchen_Fur_Sink
       - SM_Washbasin_.*
   -
     classId: 34
     className: "lamp"
     regex:
-      - BP_TableLamp_.*
-      - BP_WallLamp_.*
-      - BP_lamp_.*
+      - SM_TableLamp_.*
+      - SM_WallLamp_.*
+      - SM_lamp_.*
       - SM_Floor_Lamp_.*
+      - SM_Floor_Lamp
       - SM_Kitchen_KNOXHULT_Lamps.*
+      - SM_Kitchen_Fur_Lamps
       - SM_Light_ALENG.*
       - SM_Light_Hektar_.*
       - SM_Light_MEZOSPHERE.*
+      - SM_lamp_\d*
+      - SM_Lamp_\d*
       - SM_Marker_01_SM_Marker_.*
   -
     classId: 35
@@ -228,6 +242,7 @@ classMappings:
     className: "otherstructure"
     regex:
       - SM_Kitchen_KNOXHULT_Exhaust_Hood.*
+      - SM_Kitchen_Fur_Exhaust_Hood
   -
     classId: 38
     className: "otherfurniture"
@@ -236,12 +251,13 @@ classMappings:
       - SM_Branas_.*
       - SM_WashingMachine_.*
       - Shoe_shelf_Hemnes.*
+      - SM_Shoe_shelf_01
   -
     classId: 39
     className: "otherprop"
     regex:
-      - BP_Monitor_.*
-      - ChineseFoodBox_A_.*
+      - SM_Monitor_.*
+      - ChineseFoodBox_A.*
       - Fiddle_a_.*
       - FloorBottle_c_.*
       - SM_Bowl_.*
@@ -257,11 +273,15 @@ classMappings:
       - SM_Jar.*
       - SM_Journal_.*
       - SM_Keyboard_.*
-      - SM_Knives_Stand_Hivla_.*
+      - SM_Knives_Stand_.*
       - SM_Laundry_Basket_.*
-      - SM_Notebook_01_.*
+      - SM_Notebook_01.*
       - SM_Pen_Stand_Tiera_.*
+      - SM_Pen_Stand_01_v\d*
       - SM_Plant_.*
+      - SM_Plant
+      - Fiddle_a
+      - SM_Remote
       - SM_Plate_.*
       - SM_Printer_.*
       - SM_RecycleBin_.*
@@ -274,95 +294,101 @@ classMappings:
       - SM_TVSet_SM_centerpeaker.*
       - SM_TVSet_SM_subwoofer.*
       - SM_Table_Decor_.*
-      - SM_ToiletPaper_02_.*
-      - SM_Toiletbrush_03_.*
+      - SM_ToiletPaper_02.*
+      - SM_Toiletbrush_03.*
       - SM_Tool_.*
       - SM_Tools.*
-      - SM_ToothbrushHolder_02_.*
+      - SM_ToothbrushHolder_02*
       - SM_Yukke_Watch.*
+      - SM_WallWatch_02
+      - WateringCan
+      - EditPhoto_a
+      - FloorBottle_c
+      - SM_Table_Decor
       - WateringCan_.*
-
 airsimInfraredToNyu:
-  0: 0
-  13: 1
-  22: 2
-  28: 3
-  34: 4
-  38: 5
-  42: 6
-  46: 7
-  50: 8
-  53: 9
-  56: 10
-  59: 11
-  61: 12
-  64: 13
-  66: 14
-  69: 15
-  71: 16
-  73: 17
-  75: 18
-  77: 19
-  79: 20
-  81: 21
-  83: 22
-  85: 23
-  86: 24
-  88: 25
-  90: 26
-  91: 27
-  93: 28
-  95: 29
-  96: 30
-  98: 31
-  99: 32
-  101: 33
-  102: 34
-  104: 35
-  105: 36
-  106: 37
-  108: 38
-  109: 39
+  0: 9 # 0 is nothing -> Window
+  13: 0
+  22: 1
+  28: 2
+  34: 3
+  38: 4
+  42: 5
+  46: 6
+  50: 7
+  53: 8
+  56: 9
+  59: 10
+  61: 11
+  64: 12
+  66: 13
+  69: 14
+  71: 15
+  73: 16
+  75: 17
+  77: 18
+  79: 19
+  81: 20
+  83: 21
+  85: 22
+  86: 23
+  88: 24
+  90: 25
+  91: 26
+  93: 27
+  95: 28
+  96: 29
+  98: 30
+  99: 31
+  101: 32
+  102: 33
+  104: 34
+  105: 35
+  106: 36
+  108: 37
+  109: 38
+  110: 39
+
 
 nyuToAirsimInfrared:
-  0: 0
-  1: 13
-  2: 22
-  3: 28
-  4: 34
-  5: 38
-  6: 42
-  7: 46
-  8: 50
-  9: 53
-  10: 56
-  11: 59
-  12: 61
-  13: 64
-  14: 66
-  15: 69
-  16: 71
-  17: 73
-  18: 75
-  19: 77
-  20: 79
-  21: 81
-  22: 83
-  23: 85
-  24: 86
-  25: 88
-  26: 90
-  27: 91
-  28: 93
-  29: 95
-  30: 96
-  31: 98
-  32: 99
-  33: 101
-  34: 102
-  35: 104
-  36: 105
-  37: 106
-  38: 108
-  39: 109
+  0: 13
+  1: 22
+  2: 28
+  3: 34
+  4: 38
+  5: 42
+  6: 46
+  7: 50
+  8: 53
+  9: 56
+  10: 59
+  11: 61
+  12: 64
+  13: 66
+  14: 69
+  15: 71
+  16: 73
+  17: 75
+  18: 77
+  19: 79
+  20: 81
+  21: 83
+  22: 85
+  23: 86
+  24: 88
+  25: 90
+  26: 91
+  27: 93
+  28: 95
+  29: 96
+  30: 98
+  31: 99
+  32: 101
+  33: 102
+  34: 104
+  35: 105
+  36: 106
+  37: 108
+  38: 109
+  39: 110
 

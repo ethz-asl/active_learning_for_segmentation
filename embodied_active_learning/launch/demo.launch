@@ -1,27 +1,28 @@
 <launch>
 
     <!--  Experiment arguments -->
-    <arg name="experiment_name" value="SpaceFillingCurves_1_fixed_speed" />
+    <arg name="experiment_name" value="UncertaintyPlanner_run_1" />
     <param name="experiment_name" value ="$(arg experiment_name)"/>
 	<!-- located in this package, contains params for uncertainty estimation and data acquisation -->
-	<arg name="experiment_config_embodied" default="SimpleBaseline.yaml"/>
-<!--	<arg name="planner_type" default="mav_active_planner"/>-->
+	<arg name="experiment_config_embodied" default="SimpleBaselineFlat.yaml"/>
+	<arg name="planner_type" default="mav_active_planner"/>
 <!--	    <arg name="planner_type" default="random_moving" />-->
 <!--	    <arg name="planner_type" default="bump_and_rotate" />-->
-	    <arg name="planner_type" default="space_filling_curves" />
-    <arg name="uncertainty" default="false"/>
+<!--	    <arg name="planner_type" default="space_filling_curves" />-->
+    <arg name="uncertainty" default="true"/>
 <!--    <arg name="uncertainty" default="false"/>-->
-	<arg name="minimap" default="false"/>
+	<arg name="minimap" default="true"/>
 
 <!--	 Located in planner app package -->
 <!--	<arg name="planner_config" default="exploration_planner.yaml"/>-->
-	<arg name="planner_config" default="reconstruction_planner.yaml"/>
-	<arg name="experiment_config" default="CityBuilding.yaml"/>
+	<arg name="planner_config" default="uncertainty_planner.yaml"/>
+<!--	<arg name="map_config" default="CityBuilding.yaml"/>-->
+	<arg name="map_config" default="CustomFlat.yaml"/>
 
-	<rosparam command="load" file="$(find active_3d_planning_app_curiosity)cfg/experiments/$(arg experiment_config)"/>
+	<rosparam command="load" file="$(find embodied_active_learning)cfg/experiments/$(arg map_config)"/>
 	<rosparam command="load" file="$(find embodied_active_learning)cfg/experiments/$(arg experiment_config_embodied)"/>
 
-    <arg name ="yaw_in_move_direction" default="false"/>
+    <arg name ="yaw_in_move_direction" default="true"/>
 	<!-- Voxblox arguments -->
 	<arg name="voxel_size" default="0.1"/>
 	<arg name="voxels_per_side" default="16"/>
@@ -190,7 +191,7 @@
 				<remap from="command/trajectory" to="/airsim/$(arg mav_name)/command/trajectory"/>
 				<!-- Build the Planner by Configuration     -->
 				<rosparam command="load"
-                          file="$(find active_3d_planning_app_curiosity)/cfg/planners/$(arg planner_config)"/>
+                          file="$(find embodied_active_learning)/cfg/planners/$(arg planner_config)"/>
 			</node>
 		</group>
 
@@ -202,14 +203,14 @@
         </group>
 
         <group if="$(eval planner_type == 'space_filling_curves')">
-            <node name = "space_filling_curves_planner" pkg="embodied_active_learning" type="space_filling_curves_planner.py" output="screen">-->
+            <node name = "space_filling_curves_planner" pkg="embodied_active_learning" type="space_filling_curves_planner.py" output="screen">
                 <remap from="command/trajectory" to="/airsim/$(arg mav_name)/command/trajectory"/>
                 <remap from="odometry" to="/airsim/airsim_node/drone_1/odom_local_ned"/>
             </node>
         </group>
 
 		<group if="$(eval planner_type == 'random_moving')">
-            <node name = "random_moving_planner" pkg="embodied_active_learning" type="random_moving_planner_node.py" output="screen">-->
+            <node name = "random_moving_planner" pkg="embodied_active_learning" type="random_moving_planner_node.py" output="screen">
                 <remap from="command/trajectory" to="/airsim/$(arg mav_name)/command/trajectory"/>
                 <remap from="odometry" to="/airsim/airsim_node/drone_1/odom_local_ned"/>
             </node>
@@ -218,5 +219,5 @@
 	</group>
 	<!-- RVIZ Visualization -->
 	<node type="rviz" name="rviz_voxblox" pkg="rviz"
-          args="-d $(find active_3d_planning_app_reconstruction)/cfg/experiments/experiment_visualization.rviz"/>
+          args="-d $(find embodied_active_learning)/cfg/experiments/experiment_visualization.rviz"/>
 </launch>

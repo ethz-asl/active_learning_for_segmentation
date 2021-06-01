@@ -22,7 +22,7 @@ class BumpAndRotatePlanner:
         '''  Initialize ros node and read params '''
         self.current_goal_x = 0
         self.current_goal_y = 0
-        self.current_goal_yaw = 0
+        self.current_goal_yaw = random.random()*2*math.pi - math.pi
         self.running = False
         self.collision_count = 0
         self.cnt = 0
@@ -73,7 +73,7 @@ class BumpAndRotatePlanner:
         self.current_goal_y += step * math.sin(self.current_goal_yaw)
         self.publish_goal()
 
-    def collision_callback(self, collision_message, step=0.2):
+    def collision_callback(self, collision_message, step=0.6):
         if not self.running:
             return
 

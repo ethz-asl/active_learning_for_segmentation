@@ -34,6 +34,9 @@ class AirSimSemanticsConverter:
 
         for _class in self.yaml_config['classMappings']:
             if _class.get('regex', [None]) != [None]:
+                print("")
+                print("[{}]".format(_class['className']))
+                print("")
                 print(_class.get('regex', None))
                 if debug:
                     class_and_id = "{:<20}".format("{}({})".format(
@@ -42,8 +45,9 @@ class AirSimSemanticsConverter:
                     print("{} : Regex Patterns: {}".format(
                         class_and_id, regex_pattern))
                 for pattern in _class['regex']:
+                    pattern = pattern.replace(".*","[\w]*")
                     res = client.simSetSegmentationObjectID(
-                        pattern, _class['classId'], True)
+                        pattern, _class['classId'] + 1, True)
                     if not res:
                         print(
                             "Did not find matching Airsim mesh for pattern ({})" .format(pattern))
@@ -62,6 +66,8 @@ class AirSimSemanticsConverter:
             infrared_img: Numpy array (h,w)
         """
         mapping = self.yaml_config['airsimInfraredToNyu']
+        print(mapping)
+        print(np.unique(infrared_img))
         for infrared_id in mapping.keys():
             infrared_img[infrared_img == infrared_id] = mapping[infrared_id]
 
@@ -72,4 +78,5 @@ class AirSimSemanticsConverter:
                     np.sum(invalid_ids)))
             infrared_img[invalid_ids] = 39
 
+        print(np.unique(infrared_img))
         return infrared_img

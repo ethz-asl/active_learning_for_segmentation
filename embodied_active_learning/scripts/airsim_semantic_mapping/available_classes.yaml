@@ -1,3 +1,4 @@
+# Debugging File that contains all static meshes from the studio environment
 classes:
   - "SM_Floor"
   - "SM_Walls"

@@ -51,9 +51,10 @@ class ExperimentManager:
         yaw = rospy.get_param("/start_position/yaw", 0)
         self.initial_pose = [x, y, z, yaw]
         self.air_sim_semantics_converter = semantics.AirSimSemanticsConverter(
-            rospy.get_param("semantic_mapping_path",
+            rospy.get_param("/semantic_mapping_path",
                             "../../../cfg/airsim/semanticClasses.yaml")) #semanticClassesCustomFlat
-
+        print("[SEMANTIC MAPPING FROM]",  rospy.get_param("/semantic_mapping_path",
+                            "../../../cfg/airsim/semanticClasses.yaml"))
         self._takeoff_proxy = rospy.ServiceProxy(self.ns_airsim + "/" +
                                                  self.vehicle_name + "/takeoff",
                                                  Takeoff)  # Service to take off

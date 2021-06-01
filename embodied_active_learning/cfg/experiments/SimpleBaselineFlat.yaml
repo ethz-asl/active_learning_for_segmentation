@@ -14,7 +14,7 @@ data_generation:
     type: "goalpointSampler"
     output_folder: "/home/rene/thesis/imgs_goalpoint"
 
-semantic_mapping_path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClasses.yaml"
+semantic_mapping_path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClassesCustomFlat.yaml"
 start_position:
   x: 0
   y: 0
@@ -22,4 +22,4 @@ start_position:
   yaw: 0 #3.14
 
 minimap:
-  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/map.pickle"
+  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/minimap_flat.pickle"

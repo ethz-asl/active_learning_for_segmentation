@@ -15,7 +15,7 @@
 # Setup
 ## Dependencies
   * `catkin_simple` ([https://github.com/catkin/catkin_simple](https://github.com/catkin/catkin_simple))
-  * `mav_acive_3d_path_planning` ([https://github.com/ethz-asl/mav_active_3d_planning](https://github.com/ethz-asl/mav_active_3d_planning))
+  * `mav_active_3d_path_planning` ([https://github.com/ethz-asl/mav_active_3d_planning](https://github.com/ethz-asl/mav_active_3d_planning))
   
 # Structure
 The embodied active learning package consists of four main parts:
@@ -119,7 +119,7 @@ git submodule init
     TODO
 5. Source and compile:
 ```shell script
-source ../devel/setup.bash
+source ../../devel/setup.bash
 catkin build embodied_active_learning # Builds this package only
 catkin build # Builds entire workspace, recommended for full install.
 ```
