@@ -8,6 +8,14 @@ import numpy as np
 import os
 
 
+def batch(iterable, n=1):
+    if n <= 0:
+        yield iterable[:]
+    else:
+        l = len(iterable)
+        for ndx in range(0, l, n):
+            yield iterable[ndx:min(ndx + n, l)]
+
 def semseg_compute_confusion(y_hat_lbl, y_lbl, num_classes, ignore_label):
     assert torch.is_tensor(y_hat_lbl) and torch.is_tensor(y_lbl), 'Inputs must be torch tensors'
     assert y_lbl.device == y_hat_lbl.device, 'Input tensors have different device placement'
@@ -54,6 +62,7 @@ class DataLoader:
             self.img_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "img" in f or "rgb" in f])
             self.mask_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "mask" in f])
             print("Creating dataloader with params: {},{},{},{},{}".format(folder_path, num_imgs, transform, limit_imgs, cpu_mode))
+
             if limit_imgs is not None and limit_imgs != 0:
                 self.img_files = self.img_files[::(len(self.img_files)//limit_imgs+1)]
                 self.mask_files = self.mask_files[::(len(self.img_files)//limit_imgs+1)]
