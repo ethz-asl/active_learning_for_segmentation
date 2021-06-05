@@ -180,7 +180,7 @@ for buffer in l:
     imgs = [ os.path.join(args.imgs_folder, "img_{:04d}.png".format(cnt)) for cnt in buffer]
     masks = [ os.path.join(args.imgs_folder, "mask_{:04d}.png".format(cnt)) for cnt in buffer]
 
-    imgs = [torch.tensor(prepare_img(np.asarray(Image.open(img))[:,:,0:3].copy()).transpose(2, 0, 1)[None]).float() for img in imgs]
+    imgs = [torch.tensor(prepare_img(np.asarray(Image.open(img))[:,:,[2,1,0]].copy()).transpose(2, 0, 1)[None]).float() for img in imgs]
     masks = [torch.tensor(air_sim_semantics_converter.map_infrared_to_nyu(np.asarray(Image.open(img_gt)).copy())).long() for img_gt in masks]
     to_be_used = []
 
