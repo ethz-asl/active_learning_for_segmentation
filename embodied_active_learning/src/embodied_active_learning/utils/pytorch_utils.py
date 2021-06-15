@@ -88,7 +88,7 @@ class DataLoader:
 
                 if limit_imgs is not None and limit_imgs != 0:
                     self.img_files = self.img_files[::(len(self.img_files)//limit_imgs+1)]
-                    self.mask_files = self.mask_files[::(len(self.img_files)//limit_imgs+1)]
+                    self.mask_files = self.mask_files[::(len(self.mask_files)//limit_imgs+1)]
                     print("[DATALOADER] limited images to {}".format(len(self.mask_files)))
 
             if (num_imgs is not None):
