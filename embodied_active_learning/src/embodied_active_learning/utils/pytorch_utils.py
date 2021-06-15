@@ -59,14 +59,37 @@ class DataLoader:
     class DataLoaderSegmentation(torchData.Dataset):
         def __init__(self, folder_path, num_imgs = None, transform = None, limit_imgs = None, cpu_mode = False):
             super().__init__()
-            self.img_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "img" in f or "rgb" in f])
-            self.mask_files = sorted([os.path.join(folder_path,f) for f in os.listdir(folder_path) if "mask" in f])
             print("Creating dataloader with params: {},{},{},{},{}".format(folder_path, num_imgs, transform, limit_imgs, cpu_mode))
 
-            if limit_imgs is not None and limit_imgs != 0:
-                self.img_files = self.img_files[::(len(self.img_files)//limit_imgs+1)]
-                self.mask_files = self.mask_files[::(len(self.img_files)//limit_imgs+1)]
-                print("[DATALOADER] limited images to {}".format(len(self.mask_files)))
+            if(os.path.exists(os.path.join(folder_path, "gain_info.txt"))):
+                print("found gain info file. Going to order images by gains.")
+                def set_file_name(entry):
+                    entry['file'] = os.path.basename(entry['file'])
+                    entry['gain'] = float(entry['gain'].replace(";", ""))
+                    return entry
+
+                import pandas as pd
+                gp_gains = pd.read_csv(os.path.join(folder_path, "gain_info.txt"),names=['file', 'gain'])
+
+                gp_gains.apply(set_file_name, axis=1)
+                gp_gains_sorted = gp_gains.sort_values(by="gain", ascending=False)
+                files_sorted = gp_gains_sorted['file']
+                self.img_files = []
+                self.mask_files = []
+                for entry in files_sorted:
+                    self.img_files.append(entry.replace("mask", "rgb"))
+                    self.mask_files.append(entry)
+                print("found {} images".format(len(self.img_files)))
+
+            else:
+                self.img_files = sorted(
+                    [os.path.join(folder_path, f) for f in os.listdir(folder_path) if "img" in f or "rgb" in f])
+                self.mask_files = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) if "mask" in f])
+
+                if limit_imgs is not None and limit_imgs != 0:
+                    self.img_files = self.img_files[::(len(self.img_files)//limit_imgs+1)]
+                    self.mask_files = self.mask_files[::(len(self.img_files)//limit_imgs+1)]
+                    print("[DATALOADER] limited images to {}".format(len(self.mask_files)))
 
             if (num_imgs is not None):
                 print("[DATALOADER] going to limit images to {}".format(num_imgs))
