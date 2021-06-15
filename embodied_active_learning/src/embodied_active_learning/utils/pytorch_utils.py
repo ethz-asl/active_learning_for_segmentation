@@ -77,8 +77,8 @@ class DataLoader:
                 self.img_files = []
                 self.mask_files = []
                 for entry in files_sorted:
-                    self.img_files.append(entry.replace("mask", "rgb"))
-                    self.mask_files.append(entry)
+                    self.img_files.append(os.path.join(folder_path,entry.replace("mask", "rgb")))
+                    self.mask_files.append(os.path.join(folder_path, entry))
                 print("found {} images".format(len(self.img_files)))
 
             else:
