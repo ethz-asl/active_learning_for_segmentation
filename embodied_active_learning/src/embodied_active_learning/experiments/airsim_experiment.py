@@ -15,7 +15,7 @@ from embodied_active_learning.data_acquisitors import constant_rate_data_acquisi
 from embodied_active_learning.airsim_utils import semantics
 
 
-def getDataAcquisitior(params, semantic_converter):
+def get_data_acquisitior(params, semantic_converter):
     rospy.loginfo("Create Data Acquisitior for params: {}".format(str(params)))
     type = params.get("type", "constantSampler")
     if type == "constantSampler":
@@ -64,7 +64,7 @@ class ExperimentManager:
 
         if self.launch_simulation():
             try:
-                self.data_aquisitors = [getDataAcquisitior(p, self.air_sim_semantics_converter) for p in rospy.get_param("/data_generation")]
+                self.data_aquisitors = [get_data_acquisitior(p, self.air_sim_semantics_converter) for p in rospy.get_param("/data_generation")]
             except ValueError as e:
                 rospy.logerr("Could not create data acquisitor.\n {}".format(
                     str(e)))
@@ -123,6 +123,14 @@ class ExperimentManager:
             self.ns_planner + "/toggle_running", SetBool)
 
         run_planner_srv(True)
+
+        try:
+            uncertainty_srv = rospy.ServiceProxy("/uncertainty/toggle_running", SetBool)
+            uncertainty_srv(True)
+        except:
+            print("Could not start uncertainty estimator")
+
+
         rospy.loginfo("\n" + "*" * 39 +
                       "\n* Succesfully started the simulation! *\n" + "*" * 39)
         return True
