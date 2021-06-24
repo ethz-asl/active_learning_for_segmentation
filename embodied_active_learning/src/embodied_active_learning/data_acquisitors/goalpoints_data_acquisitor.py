@@ -11,6 +11,7 @@ from sensor_msgs.msg import Image
 import numpy as np
 from PIL import Image as PilImage
 from std_msgs.msg import Bool
+from embodied_active_learning.msg import waypoint_reached
 
 class GoalpointsDataAcquisitor:
     """ Class that Samples Semantic+Depth+RGB images in a constant rate"""
@@ -22,7 +23,7 @@ class GoalpointsDataAcquisitor:
         self._depth_sub = Subscriber("depthImage", Image)
         self._semseg_sub = Subscriber("semsegImage", Image)
 
-        self._point_reached = rospy.Subscriber("/planner/goalpoint_reached", Bool, self.set_image_request)
+        self._point_reached = rospy.Subscriber("/planner/waypoint_reached", waypoint_reached, self.set_image_request)
 
         self.image_requested = False
 
@@ -41,7 +42,9 @@ class GoalpointsDataAcquisitor:
         rospy.loginfo("Started GoalpointsDataAcquisitor")
 
     def set_image_request(self, msg):
-        if msg.data:
+        if msg.reached:
+            print("Requesting image for goalpoint.", msg.gain)
+            self.image_gain = msg.gain
             self.image_requested = True
 
     def callback(self, rgb_msg, depth_msg, semseg_msg):
@@ -65,3 +68,7 @@ class GoalpointsDataAcquisitor:
         mask = mask.reshape(semseg_msg.height, semseg_msg.width, 3)[:, :, 0]
         PilImage.fromarray(self.semantic_converter.map_infrared_to_nyu(mask)).save(
             "{}/{}_mask.png".format(self.path, ts))
+
+        # Append gain info to order images by gain later
+        with open("{}/gain_info.txt".format(self.path), "a") as f:
+            f.write("{}/{}_mask.png,{};\n".format(self.path, ts, self.image_gain))
