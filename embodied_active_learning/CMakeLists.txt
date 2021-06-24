@@ -49,9 +49,11 @@ find_package(airsim_ros_pkgs REQUIRED)
 
 catkin_package()
 
-
 cs_add_executable(trajectory_caller_node
         src/planner/trajectory_caller_node.cpp
         )
-
+cs_add_executable(curiosity_planner_node
+        src/planner/curiosity_planner_node.cpp
+        )
 target_link_libraries(trajectory_caller_node ${catkin_LIBRARIES} AirLib ${RPC_LIB})
+target_link_libraries(curiosity_planner_node ${catkin_LIBRARIES} AirLib ${RPC_LIB})
