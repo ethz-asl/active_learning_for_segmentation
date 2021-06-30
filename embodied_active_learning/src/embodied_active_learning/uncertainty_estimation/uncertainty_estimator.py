@@ -1,7 +1,56 @@
 import numpy as np
 import embodied_active_learning.airsim_utils.semantics as semantics
+import scipy
 
-class GroundTruthErrorEstimator:
+class UncertaintyEstimator:
+  def predict(self, image: np.ndarray, gt_image: np.ndarray) -> np.ndarray:
+    raise NotImplementedError("Class needs to be overwritten")
+
+class DynamicThresholdWrapper:
+  """ Wraps around any Uncertanty estimator and thresholds the output """
+  def __init__(self, uncertanity_estimator: UncertaintyEstimator, initial_threshold = 0.2, quantile = 0.90, update = True, max_value = 1):
+    self.uncertanity_estimator = uncertanity_estimator
+    self.threshold = initial_threshold
+    self.quantile = quantile
+    self.update = update
+    self.max_value = max_value
+
+  def threshold_image(self, uncertainty: np.ndarray):
+    uncertainty[uncertainty < self.threshold] = 0
+    uncertainty = (uncertainty - self.threshold) / (self.max_value - self.threshold)
+    uncertainty[uncertainty > 1] = 1
+    uncertainty[uncertainty < 0] = 0
+    return uncertainty
+
+  def predict(self, image: np.ndarray, gt_image: np.ndarray):
+    ss, uncertanty = self.uncertanity_estimator.predict(image, gt_image)
+    return ss, self.threshold_image(uncertanty)
+
+  def fit(self, all_uncertanties: list):
+    if self.update:
+      # mean = np.mean(np.asarray(all_uncertanties).ravel())
+      # self.threshold = scipy.stats.distributions.gamma.ppf(self.quantile, mean)
+      mean, var = scipy.stats.distributions.norm.fit(np.asarray(all_uncertanties).ravel())
+      self.threshold = scipy.stats.distributions.norm.ppf(self.quantile, mean, var)
+      self.uncertanity_estimator.scale_max = np.max(np.asarray(all_uncertanties).ravel())
+      print("[DynamicThresholdWrapper] updated threshold to {}. New mean {}".format(self.threshold, mean))
+
+class ClusteredUncertaintyEstimator(UncertaintyEstimator):
+    def __init__(self, model):
+        self.model = model
+
+    def predict(self, image, gt_image):
+         """
+         :arg image: numpy array of dimensions [height, width, batch]
+         :return: Tuple:
+             First: Semantic Image [height,width, batch] np.uint8
+             Second: Error Image [height, width, batch] float [0,1]
+         """
+         prediction, uncertainty = self.model(image)
+         sem_seg = np.argmax(prediction, axis=-1).astype(np.uint8)
+         return sem_seg, uncertainty
+
+class GroundTruthErrorEstimator(UncertaintyEstimator):
     def __init__(self, model, semantics_converter : semantics.AirSimSemanticsConverter):
         """
         :param model: Function that maps an input numpy array to on output numpy array
@@ -24,7 +73,7 @@ class GroundTruthErrorEstimator:
         return sem_seg, error
 
 
-class SimpleSoftMaxEstimator:
+class SimpleSoftMaxEstimator(UncertaintyEstimator):
 
     def __init__(self, model, from_logits=False):
         """
