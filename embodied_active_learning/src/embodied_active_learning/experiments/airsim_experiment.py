@@ -125,10 +125,11 @@ class ExperimentManager:
 
     run_planner_srv(True)
 
+    # Uncertainty estimation
     try:
       uncertainty_srv = rospy.ServiceProxy("/uncertainty/toggle_running", SetBool)
       uncertainty_srv(True)
-    except:
+    except rospy.ROSException:
       print("Could not start uncertainty estimator")
 
     rospy.loginfo("\n" + "*" * 39 +
