@@ -8,14 +8,19 @@ import numpy as np
 import torch.nn.functional as F
 import torch
 import torch.utils.data as data
+
 from torchvision import transforms
 from refinenet.models.resnet import rf_lw50, rf_lw101, rf_lw152
-import json
+
 import os
 import time
 import pandas as pd
 from embodied_active_learning.airsim_utils import semantics
 from embodied_active_learning.utils import pytorch_utils
+
+from embodied_active_learning.utils.online_learning import get_online_learning_refinenet
+
+from densetorch.engine.miou import fast_cm
 
 
 def getListOfCheckpoints(dirName):
@@ -32,7 +37,7 @@ def getListOfCheckpoints(dirName):
     # If entry is a directory then get the list of files in this directory
     if os.path.isdir(fullPath):
       allFiles = allFiles + getListOfCheckpoints(fullPath)
-    elif "checkpoint.pth.tar" in fullPath:
+    elif ".pth" in fullPath:
       allFiles.append(fullPath)
 
   return allFiles
@@ -48,7 +53,7 @@ parser.add_argument('--testset_folder',
 
 parser.add_argument('--network',
                     help='Folder where testset images are stored',
-                    default="refinenet_101",
+                    default="refinenet_50",
                     type=str)
 
 parser.add_argument('--checkpoint',
@@ -61,21 +66,31 @@ parser.add_argument('--semantics_mapping',
                     default="/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClasses.yaml",
                     # "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/refinenet/checkpoints/checkpoint.pth.tar",
                     type=str)
+
 args = parser.parse_args()
 testsetFolder = args.testset_folder
 network = None
 checkpoint = args.checkpoint
-if args.network == "refinenet_101":
+if args.network == "refinenet_50":
   network = rf_lw50(40, pretrained=True)
-elif args.network == "refinenet_50":
+elif args.network == "refinenet_101":
   network = rf_lw101(40, pretrained=True)
 elif args.network == "refinenet_152":
   network = rf_lw152(40, pretrained=True)
+elif args.network == "GMM_refinenet_50":
+  network = get_online_learning_refinenet(50, 40, True, save_path="", model_slug="",
+                                          with_uncertainty=True).model
+elif args.network == "GMM_refinenet_101":
+  network = get_online_learning_refinenet(101, 40, True, save_path="", model_slug="",
+                                          with_uncertainty=True).model
+elif args.network == "GMM_refinenet_152":
+  network = get_online_learning_refinenet(152, 40, True, save_path="", model_slug="",
+                                          with_uncertainty=True).model
 else:
   print("network {} not found!".format(args.network))
   exit()
 
-network = torch.nn.DataParallel(network)
+# network = torch.nn.DataParallel(network)
 nyuMappingsYaml = args.semantics_mapping
 airSimSemanticsConverter = semantics.AirSimSemanticsConverter(nyuMappingsYaml)
 
@@ -84,33 +99,31 @@ IMG_MEAN = torch.tensor(np.array([0.485, 0.456, 0.406]).reshape((3, 1, 1)))
 IMG_STD = torch.tensor(np.array([0.229, 0.224, 0.225]).reshape((3, 1, 1)))
 transform = transforms.Compose(
   [pytorch_utils.Transforms.Normalize(IMG_MEAN, IMG_STD), pytorch_utils.Transforms.AsFloat()])
-testLoader = data.DataLoader(pytorch_utils.DataLoader.DataLoaderSegmentation(testsetFolder, transform=transform),
-                             batch_size=8)
+testLoader = data.DataLoader(
+  pytorch_utils.DataLoader.DataLoaderSegmentation(testsetFolder, transform=transform, num_imgs=120),
+  batch_size=8)
 
 checkpoint_files = [checkpoint] if not os.path.isdir(checkpoint) else getListOfCheckpoints(checkpoint)
 
 all_results = []
+t = time.time()
 
-for checkpoint in checkpoint_files:
+for checkpoint in sorted(checkpoint_files, reverse=True):
 
   entry_as_dict = {'planner': "unknown", 'n_imgs': -1}
   if checkpoint is not None:
     print("Restoring from checkpoint:\n===> ", checkpoint)
-
-    network.load_state_dict(torch.load(checkpoint)['model'])
+    network.load_state_dict(torch.load(checkpoint))
     print("Successfully loaded network")
 
-    data = json.load(open(os.path.split(checkpoint)[-2] + "/args.json", 'r'))
-    name = os.path.basename(data.get('train_path', "unknown")).replace("experiment_", "")
-    n_imgs = data.get('num_imgs', -1)
-    entry_as_dict = {'cp': checkpoint, 'planner': name, 'n_imgs': n_imgs}
+    imgs = int(checkpoint.split("_")[-1].replace(".pth", ""))
+    entry_as_dict = {'cp': checkpoint, 'planner': "_", 'n_imgs': imgs}
 
   network.eval()
 
-  confusion = torch.zeros(40, 40)
+  confusion = np.zeros((40, 40))  # torch.zeros(40, 40)
   network = network.cuda()
   if torch.cuda.is_available():
-    confusion = confusion.cuda()
     network = network.cuda()
 
   batches = len(testLoader)
@@ -123,14 +136,23 @@ for checkpoint in checkpoint_files:
     h, w = masks.shape[-2:]
     with torch.no_grad():
       print("Scoring batch {}/{}".format(cnt, batches))
-      predictions = network(imgs)
+      predictions = network(imgs)  # [0]
+      if type(predictions) == tuple:
+        predictions = predictions[0]
+
       predictions = F.interpolate(predictions, (h, w), mode="bilinear", align_corners=False)
       predictions_categorical = torch.argmax(predictions, dim=-3)
-      confusion_matrix = pytorch_utils.semseg_compute_confusion(predictions_categorical, masks, num_classes=40,
-                                                                ignore_label=None)
+      idx = masks <= 40
+
+      confusion_matrix = fast_cm(
+        predictions_categorical[idx].cpu().detach().numpy().astype(np.uint8),
+        masks[idx].cpu().detach().numpy().astype(np.uint8), 40
+      )
+
       confusion += confusion_matrix
 
-  mIoU, classIoU, unseenClasses = pytorch_utils.semseg_accum_confusion_to_iou(confusion, ignore_zero=True)
+  mIoU, classIoU, unseenClasses = pytorch_utils.semseg_accum_confusion_to_iou(torch.from_numpy(confusion),
+                                                                              ignore_zero=False)
 
   print("IoU per Classes:")
   for idx, IoU in enumerate(classIoU.cpu().detach().numpy()):
@@ -138,12 +160,15 @@ for checkpoint in checkpoint_files:
     entry_as_dict[airSimSemanticsConverter.get_nyu_name_for_nyu_id(idx)] = IoU
   print("mIoU:")
   print("  {:.1f}%".format(mIoU.cpu().detach().numpy().item()))
+  print("Acc:")
+  print("  {:.2f}%".format(np.sum(np.diag(confusion)) / (np.sum(confusion)) * 100))
 
   entry_as_dict['mIoU'] = mIoU.cpu().detach().numpy().item()
+  entry_as_dict['acc'] = np.sum(np.diag(confusion)) / (np.sum(confusion))
   all_results.append(entry_as_dict)
 
-df = pd.DataFrame(all_results)
-name = testsetFolder
-if name[-1] == "/":
-  name = name[:-1]
-df.to_csv('results_{}_{}.csv'.format(os.path.basename(name),time.time()))
+  df = pd.DataFrame(all_results)
+  name = args.checkpoint
+  if name[-1] == "/":
+    name = name[:-1]
+  df.to_csv('results_{}_{}.csv'.format(os.path.basename(name), t))
