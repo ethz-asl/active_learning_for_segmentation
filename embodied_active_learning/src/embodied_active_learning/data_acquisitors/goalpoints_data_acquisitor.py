@@ -15,7 +15,7 @@ from embodied_active_learning.msg import waypoint_reached
 
 
 class GoalpointsDataAcquisitor:
-  """ Class that Samples Semantic+Depth+RGB images in a constant rate"""
+  """ Class that Samples Semantic+Depth+RGB images whenever a goalpoint is reached"""
 
   def __init__(self, params, semantic_converter):
     self.path = params.get("output_folder", "/tmp")
@@ -23,6 +23,7 @@ class GoalpointsDataAcquisitor:
     self._rgb_sub = Subscriber("rgbImage", Image)
     self._depth_sub = Subscriber("depthImage", Image)
     self._semseg_sub = Subscriber("semsegImage", Image)
+    self.running = False
 
     self._point_reached = rospy.Subscriber("/planner/waypoint_reached", waypoint_reached, self.set_image_request)
 
@@ -41,6 +42,7 @@ class GoalpointsDataAcquisitor:
     ts.registerCallback(self.callback)
     self.capture_pub = rospy.Publisher("/image_captured_goal", Bool, queue_size=10)
     rospy.loginfo("Started GoalpointsDataAcquisitor")
+    self.running = True
 
   def set_image_request(self, msg):
     if msg.reached:
@@ -50,7 +52,7 @@ class GoalpointsDataAcquisitor:
 
   def callback(self, rgb_msg, depth_msg, semseg_msg):
     """ Saves te supplied rgb and semseg image as PNGs """
-    if not self.image_requested:
+    if not self.running or not self.image_requested:
       return
 
     self.image_requested = False
