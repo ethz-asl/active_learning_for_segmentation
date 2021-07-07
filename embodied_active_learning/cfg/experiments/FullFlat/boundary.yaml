@@ -1,0 +1,26 @@
+# Experiment (Custom Flat) specific parameters
+
+# Bounding boxes (in initialization frame, relative to PlayerStart)
+map_bounding_volume:
+  x_min: -5.2 #6.8 #-5.3 #-6.8
+  x_max: 10.8 #11.0 #9.0
+  y_min: -5.1
+  y_max: 4.1
+  z_min: -1.4
+  z_max: 1.4
+
+target_bounding_volume:
+  x_min: -5.2 #6.8 #-5.3 #-6.8
+  x_max: 10.8 #11.0 #9.0
+  y_min: -5.1
+  y_max: 4.1
+  z_min: -1.4
+  z_max: 1.4
+
+# System Constraints
+planner:
+  system_constraints:
+    v_max: 3.0
+    a_max: 3.0
+    yaw_rate_max: 1.57
+    collision_radius: 0.2

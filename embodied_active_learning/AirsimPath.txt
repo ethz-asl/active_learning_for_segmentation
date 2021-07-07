@@ -1,0 +1,1 @@
+set(AIRSIM_ROOT /home/rene/catkin_ws/src/AirSim)

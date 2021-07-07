@@ -2,7 +2,7 @@
 <package format="2">
     <name>embodied_active_learning</name>
     <version>0.0.1</version>
-    <description>TODO</description>
+    <description>Package that trains a semantic segmentation network inside an Unreal-Airsim environment</description>
 
     <author email="zrene@ethz.ch">René Zurbrügg</author>
     <maintainer email="zrene@ethz.ch">René Zurbrügg</maintainer>
@@ -11,5 +11,16 @@
 
     <buildtool_depend>catkin</buildtool_depend>
     <buildtool_depend>catkin_simple</buildtool_depend>
+
+
+    <build_depend>std_msgs</build_depend>
+    <build_depend>message_generation</build_depend>
+    <exec_depend>message_runtime</exec_depend>
+
+    <depend>active_3d_planning_core</depend>
+    <depend>active_3d_planning_ros</depend>
+    <depend>active_3d_planning_mav</depend>
+    <depend>active_3d_planning_voxblox</depend>
+
 
 </package>
