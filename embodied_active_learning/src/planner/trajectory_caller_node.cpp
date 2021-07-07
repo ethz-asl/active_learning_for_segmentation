@@ -159,7 +159,7 @@ void TrajectoryCallerNode::odomCallback(const nav_msgs::Odometry &msg) {
       // to moving direction
       auto delta_x = srv.request.x - current_position.x;
       auto delta_y = srv.request.y - current_position.y;
-      if (abs(delta_x) + abs(delta_y) <= 0.05) {
+      if (abs(delta_x) + abs(delta_y) <= 0.1) {
         // If we overshoot over the goalpoint, the robot will rotate 180 deg and
         // drive back for a really small amount. Check if overshoot occured
         // (delta really small) and don't turn around in this case
