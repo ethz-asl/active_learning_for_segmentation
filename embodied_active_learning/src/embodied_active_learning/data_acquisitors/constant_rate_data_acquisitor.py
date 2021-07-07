@@ -17,6 +17,7 @@ class ConstantRateDataAcquisitor:
   """ Class that Samples Semantic+Depth+RGB images in a constant rate"""
 
   def __init__(self, params, semantic_converter):
+    self.running = False
     self.rate = params.get("rate", 1)
     self.path = params.get("output_folder", "/tmp")
     self.period = 1 / self.rate
@@ -39,11 +40,12 @@ class ConstantRateDataAcquisitor:
       allow_headerless=True)
     ts.registerCallback(self.callback)
     self.capture_pub = rospy.Publisher("/image_captured", Bool, queue_size=10)
+    self.running = True
     rospy.loginfo("Started ConstantRateDataAcquisitor")
 
   def callback(self, rgb_msg, depth_msg, semseg_msg):
     """ Saves te supplied rgb and semseg image as PNGs """
-    if (rospy.get_rostime() - self.last_request).to_sec() < self.period:
+    if not self.running or (rospy.get_rostime() - self.last_request).to_sec() < self.period:
       # Too early, go back to sleep :)
       return
 
