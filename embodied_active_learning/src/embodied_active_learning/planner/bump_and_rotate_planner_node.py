@@ -90,21 +90,21 @@ class BumpAndRotatePlanner:
       self.current_goal_y -= step * math.sin(yaw)
       self.collided = True
 
-    print("[COLLIDED]. Going to publish new goal {:.4f},{:.4f},{:.4f}".format(
+    rospy.loginfo("[COLLIDED]. Going to publish new goal {:.4f},{:.4f},{:.4f}".format(
       self.current_goal_x, self.current_goal_y, self.current_goal_yaw))
     self.publish_goal()
     self.collision_count += 1
 
     if self.collision_count >= 20:
       # Severe collision error (Stuck somewhere). Start driving backwards again to try to fix it
-      print(
+      rospy.logwarn(
         "[COLLIDED COUNT] Collision count is bigger than 20. Going to rerun backtracker again")
 
       self.collided = False
       self.force_replan = True
     if self.collision_count >= 100:
       # We are doomed. Publish origin as goal point and hope for the best, that we get there somehow
-      print("Severe collision error. Going to move back to origin")
+      rospy.logwarn("Severe collision error. Going to move back to origin")
       self.collision_count = 0
       self.current_goal_x = 0
       self.current_goal_y = 0
