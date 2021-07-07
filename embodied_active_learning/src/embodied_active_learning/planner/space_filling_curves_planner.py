@@ -92,7 +92,7 @@ class SpaceFillingCurvesPlanner:
     self.x = (nextPoint[1] - self.left_start) * self.lengthPerPixel
     self.y = (nextPoint[0] - self.top_start) * self.lengthPerPixel
     z = 0
-    print("NEXT GOAL: {},{} (top,left) {},{}".format(self.x, self.y, nextPoint[0], nextPoint[1]))
+    rospy.logdebug("NEXT GOAL: {},{} (top,left) {},{}".format(self.x, self.y, nextPoint[0], nextPoint[1]))
 
     yaw = 0
     dx = self.x - self.currentPose.position.x
@@ -111,7 +111,7 @@ class SpaceFillingCurvesPlanner:
     if not self.running:
       return
     # if collided just try to track next waypoint
-    print("[COLLIDED].")
+    rospy.logwarn("[COLLIDED].")
     if not self.collided:
       self.publishGoal()
     self.collided = True
@@ -126,9 +126,9 @@ class SpaceFillingCurvesPlanner:
 
     if self.forceReplan or abs(y - self.y) + abs(x - self.x) < 0.1:
       self.publishGoal()
-      print("[MOVING] Going to publish next goal {:.4f},{:.4f},{:.4f}".format(self.x,
-                                                                              self.y,
-                                                                              self.lastYaw))
+      rospy.logdebug("[MOVING] Going to publish next goal {:.4f},{:.4f},{:.4f}".format(self.x,
+                                                                                       self.y,
+                                                                                       self.lastYaw))
       self.forceReplan = False
 
 
