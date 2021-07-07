@@ -28,6 +28,7 @@ from embodied_active_learning.uncertainty_estimation.uncertainty_estimator impor
   GroundTruthErrorEstimator, ClusteredUncertaintyEstimator, DynamicThresholdWrapper
 import embodied_active_learning.airsim_utils.semantics as semantics
 from embodied_active_learning.utils.online_learning import get_online_learning_refinenet
+from embodied_active_learning.msg import waypoint_reached
 
 
 def get_uncertainty_estimator_for_params(params: dict):
@@ -64,9 +65,12 @@ def get_uncertainty_estimator_for_params(params: dict):
       net = net.cuda()
 
     def predict_image(numpy_img, net=net, has_cuda=has_cuda):
-      orig_size = numpy_img.shape[:2][::-1]
-      img_torch = torch.tensor(
-        prepare_img(numpy_img).transpose(2, 0, 1)[None]).float()
+      if type(numpy_img) == np.ndarray:
+        orig_size = numpy_img.shape[:2][::-1]
+        img_torch = torch.tensor(
+          prepare_img(numpy_img).transpose(2, 0, 1)[None]).float()
+      else:
+        img_torch = numpy_img
 
       if has_cuda:
         img_torch = img_torch.cuda()
@@ -94,7 +98,8 @@ def get_uncertainty_estimator_for_params(params: dict):
     has_cuda = torch.cuda.is_available()
     model_slug = rospy.get_param("/experiment_name", "experiment") + "_" + str(
       datetime.datetime.fromtimestamp(time.time()).strftime("%d_%m__%H_%M_%S"))
-    net = get_online_learning_refinenet(size, classes, pretrained, save_path=save_path, model_slug=model_slug)
+    net = get_online_learning_refinenet(size, classes, pretrained, save_path=save_path, model_slug=model_slug,
+                                        replay_map=params.get("replay_old_pc", False))
 
     if checkpoint is not None:
       net.model.load_state_dict(torch.load(checkpoint))
@@ -103,9 +108,14 @@ def get_uncertainty_estimator_for_params(params: dict):
       net = net.cuda()
 
     def predict_image(numpy_img, net=net, has_cuda=has_cuda):
-      orig_size = numpy_img.shape[:2][::-1]
-      img_torch = torch.tensor(
-        prepare_img(numpy_img).transpose(2, 0, 1)[None]).float()
+      if type(numpy_img) == np.ndarray:
+        orig_size = numpy_img.shape[:2][::-1]
+        img_torch = torch.tensor(
+          prepare_img(numpy_img).transpose(2, 0, 1)[None]).float()
+      else:
+        orig_size = numpy_img.shape[-2:][::-1]
+        img_torch = numpy_img
+
       if has_cuda:
         img_torch = img_torch.cuda()
 
@@ -164,9 +174,13 @@ def get_uncertainty_estimator_for_params(params: dict):
   if model is None:
     raise ValueError("Could not find model for specified parameters")
 
+  ####
+  # Load Uncertainty Estimator
+  ####
   estimator = None
   estimator_params = params.get('method', {})
   estimator_type = estimator_params.get('type', 'softmax')
+
   if estimator_type == "softmax":
     rospy.loginfo(
       "Creating SimpleSoftMaxEstimator for uncertainty estimation")
@@ -176,7 +190,8 @@ def get_uncertainty_estimator_for_params(params: dict):
   elif estimator_type == "thresholder_softmax":
     estimator = DynamicThresholdWrapper(SimpleSoftMaxEstimator(model, from_logits=estimator_params.get(
       'from_logits', True)), initial_threshold=estimator_params.get('threshold', 0.8),
-                                        quantile=estimator_params.get('quantile', 0.9), update=True)
+                                        quantile=estimator_params.get('quantile', 0.9),
+                                        update=estimator_params.get('update', True))
   elif estimator_type == "gt_error":
     rospy.loginfo(
       "Creating GroundTruthError for uncertainty estimation")
@@ -186,7 +201,8 @@ def get_uncertainty_estimator_for_params(params: dict):
       "Creating Model Uncertainty for uncertainty estimation")
     estimator = DynamicThresholdWrapper(ClusteredUncertaintyEstimator(model),
                                         initial_threshold=estimator_params.get('threshold', 0.8),
-                                        quantile=estimator_params.get('quantile', 0.9), max_value=70);
+                                        quantile=estimator_params.get('quantile', 0.9), max_value=70,
+                                        update=estimator_params.get('update', True));
   if estimator is None:
     raise ValueError("Could not find estimator for specified parameters")
 
@@ -260,9 +276,17 @@ class UncertaintyManager:
     self.tf_listener = tf.TransformListener()
     self._start_service = rospy.Service("toggle_running", SetBool, self.toggle_running)
 
+    self._point_reached = rospy.Subscriber("/planner/waypoint_reached", waypoint_reached, self.wp_reached)
+
+    self.imgCount = 0
+    self.reached_gp = False
+
+    # If uncertainty estimator is dynamic threshold wrapper, set callbacks to refit it
+    # TODO this is kind of ugly, find a better, cleaner way
     if type(self.uncertainty_estimator) == DynamicThresholdWrapper:
       self.net.refitting_callback = lambda u_list, self=self: self.uncertainty_estimator.fit(u_list)
       self.net.threshold_image = self.uncertainty_estimator.threshold_image
+      self.net.uncertainty_callback = lambda x: self.uncertainty_estimator.predict(x, None)
 
     ts = ApproximateTimeSynchronizer(
       [self._rgb_sub, self._depth_sub, self._camera_sub, self._semseg_gt_sub],
@@ -273,9 +297,12 @@ class UncertaintyManager:
 
     rospy.loginfo("Uncertainty estimator running")
 
-    self.imgCount = 0
+  def wp_reached(self, data):
+    """ Once waypoint is reached, update reached_gp flag to make sure to capture this image for online training"""
+    self.reached_gp = True
 
   def toggle_running(self, req):
+    """ start / stops the uncertainty estimator """
     self.running = req.data
     return True, 'running'
 
@@ -292,9 +319,13 @@ class UncertaintyManager:
     :param publish_images: if image messages should be published. If false only PC is published
     :return: Nothing
     """
-    if not self.running or (rospy.get_rostime() - self.last_request).to_sec() < self.period:
-      # Too early, go back to sleep :)
-      return
+    if not self.running or not self.reached_gp:
+      if not self.running or (rospy.get_rostime() - self.last_request).to_sec() < self.period:
+        # Too early, go back to sleep :)
+        return
+    else:
+      rospy.loginfo("Reached waypoint. Going to force network training to capture right image")
+      self.reached_gp = False
 
     self.last_request = rospy.get_rostime()
     # Monitor executing time
@@ -304,7 +335,6 @@ class UncertaintyManager:
     img = np.frombuffer(rgb_msg.data, dtype=np.uint8)
     # Depth image
     img_depth = np.frombuffer(depth_msg.data, dtype=np.float32)
-    #
     img_gt = np.frombuffer(gt_img_msg.data, dtype=np.uint8)
     img_gt = img_gt.reshape(rgb_msg.height, rgb_msg.width, 3)[:, :, 0]
     # Convert BGR to RGB
@@ -313,9 +343,10 @@ class UncertaintyManager:
 
     semseg, uncertainty = self.uncertainty_estimator.predict(img, img_gt.copy())
     time_diff = time.time() - start_time
-    ropsy.loginfo(" ==> segmented images in {:.4f}s, {:.4f} FPs".format(
+    rospy.loginfo(" ==> segmented images in {:.4f}s, {:.4f} FPs".format(
       time_diff, 1 / time_diff))
 
+    # Publish uncertainty pointcloud with uncertainty as b value
     (x, y, z) = depth_to_3d(img_depth, camera)
     color = (uncertainty * 254).astype(np.uint8).reshape(-1)
     packed = pack('%di' % len(color), *color)
@@ -380,14 +411,16 @@ class UncertaintyManager:
       img_torch = torch.tensor(prepare_img(img).transpose(2, 0, 1)[None]).float()
       gt_torch = torch.tensor(self.air_sim_semantics_converter.map_infrared_to_nyu(img_gt)).long()
       self.imgCount += 1
+      # In case of map replay we also need to store the current pose of th epc
       pose = None
       if self.replay_old_pc:
         try:
+          # TODO not hardcode
           (trans, rot) = self.tf_listener.lookupTransform('/drone_1', semseg_msg.header.frame_id,
                                                           semseg_msg.header.stamp)
           pose = (trans, rot)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-          print("[ERROR] Lookup error for pose of current image!")
+          rospy.logerr("[ERROR] Lookup error for pose of current image!")
 
       # Add training sample to online net
       self.net.addSample(img_torch, gt_torch, uncertainty_score=np.mean(uncertainty), pose=pose,
