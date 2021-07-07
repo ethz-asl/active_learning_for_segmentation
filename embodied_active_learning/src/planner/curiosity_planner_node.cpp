@@ -4,8 +4,6 @@
 #include "active_3d_planning_voxblox/initialization/voxblox_package.h"
 #include "active_3d_planning_mav/initialization/mav_package.h"
 
-#include "active_3d_planning_app_curiosity/map/uncertainty_aware_map.h"
-#include "active_3d_planning_app_curiosity/initialize/map_package.h"
 
 #include <glog/logging.h>
 #include <chrono>
