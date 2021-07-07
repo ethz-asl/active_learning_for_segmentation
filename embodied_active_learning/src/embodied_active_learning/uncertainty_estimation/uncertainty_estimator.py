@@ -1,14 +1,14 @@
 import numpy as np
 import embodied_active_learning.airsim_utils.semantics as semantics
 import scipy
-
+import rospy
 
 class UncertaintyEstimator:
   def predict(self, image: np.ndarray, gt_image: np.ndarray) -> np.ndarray:
     raise NotImplementedError("Class needs to be overwritten")
 
 
-class DynamicThresholdWrapper:
+class DynamicThresholdWrapper(UncertaintyEstimator):
   """ Wraps around any Uncertanty estimator and thresholds the output.
       If requested, this threshold wrapper dynamically updates the threshold based on previous uncertainty estimates
   """
@@ -52,7 +52,7 @@ class DynamicThresholdWrapper:
       # Calculate threshold based on normal distribution and provided quantile
       self.threshold = scipy.stats.distributions.norm.ppf(self.quantile, mean, var)
       self.uncertanity_estimator.scale_max = np.max(np.asarray(all_uncertanties).ravel())
-      ropsy.loginfo("Updated threshold to {}. New mean {}".format(self.threshold, mean))
+      rospy.loginfo("Updated threshold to {}. New mean {}. Using Quantile {}".format(self.threshold, mean, self.quantile))
 
 
 class ClusteredUncertaintyEstimator(UncertaintyEstimator):
