@@ -8,7 +8,7 @@ max_new_tries: 0
 min_new_tries: 0
 min_new_value: 0
 
-verbose_modules: true
+verbose_modules: false
 build_modules_on_init: true
 expand_batch: 20
 visualize_gain: true
@@ -18,33 +18,32 @@ map:
   type: "VoxbloxMapWithUncertainty"
 
 system_constraints:
-  v_max: 5.0
-  a_max: 5.0
-  yaw_rate_max: 0.6
-  yaw_accel_max: 1.6
-  collision_radius: 0.2
+  v_max: 2.0
+  a_max: 2.0
+  yaw_rate_max: 2.6
+  yaw_accel_max: 2.6
+  collision_radius: 0.3
 
 trajectory_generator:
   collision_optimistic: false
   bounding_volume_args: "/map_bounding_volume"
-  clearing_radius: 0.2
+  clearing_radius: 0.3
 
   type: "RRTStar"
-  all_semgents_feasible: false
   crop_segments: true
-  crop_margin: 0.1
-  crop_min_length: 0.1
-  min_path_length: 0.1
+  crop_margin: 0.3
+  crop_min_length: 0.4
+  min_path_length: 0.4
   max_extension_range: 5
   maximum_tries: 1000
-  sampling_rate: 50.0
+  sampling_rate: 5.0
   sample_yaw: true
   planar: true
 
   sampling_mode: "semilocal"
   semilocal_sampling_count: 10
-  semilocal_sampling_radius_max: 1.5
-  semilocal_sampling_radius_min: 1.5
+  semilocal_sampling_radius_max: 10
+  semilocal_sampling_radius_min: 0.3
 
   rewire_root: true
   rewire_intermediate: true
@@ -71,27 +70,29 @@ trajectory_evaluator:
       type: "VoxelValueEvaluator"
       visualize_sensor_view: true
       accurate_frontiers: true
-      checking_distance: 2.0
+      checking_distance: 7.0
+
+
       bounding_volume_args: "/target_bounding_volume"
       camera_params_ns: "/unreal/unreal_ros_client/camera_params"
+      min_impact_factor: 0.0001
 
-      frontier_voxel_weight: 1.0
-      min_impact_factor: 0.01
-      new_voxel_weight: 0.0
+      weight_decay_power: 1 #0.5
+      value_factor: 10
+      frontier_voxel_value: 0.0
+      new_voxel_value: 0.1
 
-      frontier_voxel_value: 0.0001
-      new_voxel_value: 0.00001
       ray_angle_x: 0.002454
       ray_angle_y: 0.002681
 
       sensor_model:
         type: "IterativeRayCaster"
         sampling_time: 0.0
-        ray_length: 5.0
+        ray_length: 5.5
         focal_length: 320.0
         resolution_x: 640 # 640-90/172-30/127-22.5 deg fov
         resolution_y: 480
-        downsampling_factor: 1.0
+        downsampling_factor: 2
 
       cost_computer:
         type: "SegmentTime"

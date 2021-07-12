@@ -1,9 +1,15 @@
 uncertainty:
   network:
-    name: "lightweight-refinenet"
+    name: "online-lightweight-refinenet"
+    size: 50
+    save_path: "/home/rene/thesis/checkpoints/"
   method:
-    type: "softmax" # "gt_error"
-  rate: 1.5
+    type:  "thresholder_softmax"
+    threshold: 0.2
+    quantile: 0.8
+
+  rate: 0.8
+  replay_old_pc: true
 
 data_generation:
   -

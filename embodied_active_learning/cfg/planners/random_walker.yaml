@@ -8,7 +8,6 @@ max_new_tries: 0
 min_new_tries: 0
 min_new_value: 0
 
-
 verbose_modules: false
 build_modules_on_init: true
 expand_batch: 20
@@ -81,7 +80,7 @@ trajectory_evaluator:
       weight_decay_power: 1
       value_factor: 0
       frontier_voxel_value: 0.0
-      new_voxel_value: 0.01
+      new_voxel_value: 0
 
       ray_angle_x: 0.002454
       ray_angle_y: 0.002681

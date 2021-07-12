@@ -85,6 +85,10 @@ class ExperimentManager:
         rospy.logerr("Could not create data acquisitor.\n {}".format(
           str(e)))
 
+      print("Stopping acc.")
+      for acq in self.data_aquisitors:
+        acq.running = False
+
   def launch_simulation(self):
     rospy.loginfo("Experiment setup: waiting for airsim to launch")
     # Wait for airsim simulation to setup
@@ -180,8 +184,8 @@ class ExperimentManager:
     def timer_cb(event):
       if time.time() - self.last_count >= 60 * 5:
         rospy.logerr("Did not get training event in last 5 minutes. Going to shut down node!")
-        rospy.signal_shutdown("Heartbeat missing")
-        exit()
+        # rospy.signal_shutdown("Heartbeat missing")
+        # exit()
 
     rospy.Timer(rospy.Duration(10), timer_cb)
 

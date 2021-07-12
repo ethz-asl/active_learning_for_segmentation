@@ -8,8 +8,7 @@ max_new_tries: 0
 min_new_tries: 0
 min_new_value: 0
 
-
-verbose_modules: false
+verbose_modules: true
 build_modules_on_init: true
 expand_batch: 20
 visualize_gain: true
@@ -73,16 +72,18 @@ trajectory_evaluator:
       accurate_frontiers: true
       checking_distance: 7.0
 
+      weight_decay_power: 1
+      value_factor: 10
 
       bounding_volume_args: "/target_bounding_volume"
       camera_params_ns: "/unreal/unreal_ros_client/camera_params"
+
+      frontier_voxel_weight: 1.0
       min_impact_factor: 0.0001
+      new_voxel_weight: 0.001
 
-      weight_decay_power: 1
-      value_factor: 0
-      frontier_voxel_value: 0.0
-      new_voxel_value: 0.01
-
+      frontier_voxel_value: 0.0 #0.0002
+      new_voxel_value: 0.01 #0.01 #1 #1 #0.0001
       ray_angle_x: 0.002454
       ray_angle_y: 0.002681
 

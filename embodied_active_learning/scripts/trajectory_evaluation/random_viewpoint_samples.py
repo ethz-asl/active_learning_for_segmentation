@@ -17,7 +17,6 @@ import tf
 
 from embodied_active_learning.airsim_utils import semantics
 
-
 def str2bool(v):
     if isinstance(v, bool):
         return v

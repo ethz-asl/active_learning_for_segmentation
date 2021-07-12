@@ -1,0 +1,31 @@
+uncertainty:
+  network:
+    name: "online-lightweight-refinenet-with-uncertainty"
+    size: 50
+    save_path: "/home/rene/thesis/checkpoints/"
+    checkpoint: "/home/rene/catkin_ws/src/fastscnn_uncertainty/gmm_model_50_encoder.pth"
+  method:
+    type:  "model_uncertainty"
+    quantile: 0.9
+    threshold: 80
+  rate: 0.8
+  replay_old_pc: true
+
+data_generation:
+  -
+    type: "constantSampler"
+    rate: 1
+    output_folder: "/home/rene/thesis/imgs"
+  -
+    type: "goalpointSampler"
+    output_folder: "/home/rene/thesis/imgs_goalpoint"
+
+semantic_mapping_path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClassesCustomFlat.yaml"
+start_position:
+  x: 0
+  y: 0
+  z: 0
+  yaw: 0 #3.14
+
+minimap:
+  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/minimap_flat.pickle"

@@ -411,6 +411,15 @@ class UncertaintyManager:
       img_torch = torch.tensor(prepare_img(img).transpose(2, 0, 1)[None]).float()
       gt_torch = torch.tensor(self.air_sim_semantics_converter.map_infrared_to_nyu(img_gt)).long()
       self.imgCount += 1
+
+      if self.imgCount < 650:
+        print("Waiting with online training for burn in period of 650 imgs")
+        # Burn in period of 650 images
+        return
+      if self.imgCount == 650:
+        print("reached 650 images. Going to reset planner")
+        start_stop_experiment_proxy = rospy.ServiceProxy("/start_stop_experiment", SetBool)
+        start_stop_experiment_proxy(True)
       # In case of map replay we also need to store the current pose of th epc
       pose = None
       if self.replay_old_pc:
@@ -421,6 +430,7 @@ class UncertaintyManager:
           pose = (trans, rot)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
           rospy.logerr("[ERROR] Lookup error for pose of current image!")
+
 
       # Add training sample to online net
       self.net.addSample(img_torch, gt_torch, uncertainty_score=np.mean(uncertainty), pose=pose,

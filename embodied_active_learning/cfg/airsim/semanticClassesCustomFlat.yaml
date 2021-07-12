@@ -7,6 +7,7 @@ classMappings:
       - SM_Kitchen_KNOXHULT_Tile_.*
       - SM_Kitchen_Fur_Tile_2
       - Walls_StaticMesh.*
+      - Cube.*
   -
     classId: 1
     className: "floor"
