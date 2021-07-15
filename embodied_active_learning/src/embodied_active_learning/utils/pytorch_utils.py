@@ -166,7 +166,7 @@ class DataLoader:
 
 def get_nyu_custom_combined_ds(folder_path, num_imgs=None, transform=None, limit_imgs=None, cpu_mode=False, nyu_ratio = 1):
 
-  arisim_ds = DataLoader.DataLoaderSegmentation(folder_path, num_imgs=num_imgs,limit_imgs=limit_imgs, cpu_mode=False)
+  arisim_ds = DataLoader.DataLoaderSegmentation(folder_path, num_imgs=num_imgs,limit_imgs=limit_imgs, cpu_mode=cpu_mode)
   nyu_length = nyu_ratio * len(arisim_ds)
   print("Returning dataset with nyu length: ", nyu_length)
   import tensorflow as tf
