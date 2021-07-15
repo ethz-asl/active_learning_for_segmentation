@@ -73,6 +73,7 @@ class DataLoader:
   class CombinedDataset(torchData.Dataset):
     def __init__(self, datasets, transform=None):
       super().__init__()
+      self.masks_names = ["mask"]
       self.datasets = datasets
       self.transform = transform
 
@@ -251,7 +252,7 @@ def get_nyu_custom_combined_ds(folder_path, num_imgs=None, transform=None, limit
   #                  split='full',
   #                  as_supervised=True)
   # traindata = TFDataIterableDataset(data.shuffle(buffer_size=len(data)).take(nyu_length).map(data_converter))
-  traindata = NYUDepth(length = nyu_length)
+  traindata = NDataLoader.YUDepth(length = nyu_length)
   return DataLoader.CombinedDataset([arisim_ds, traindata], transform=transform)
 
 class Transforms:
