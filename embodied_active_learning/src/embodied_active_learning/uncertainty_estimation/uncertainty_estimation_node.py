@@ -30,6 +30,7 @@ import embodied_active_learning.airsim_utils.semantics as semantics
 from embodied_active_learning.utils.online_learning import get_online_learning_refinenet
 from embodied_active_learning.msg import waypoint_reached
 
+from kimera_interfacer.msg import SyncSemantic
 
 def get_uncertainty_estimator_for_params(params: dict):
   """
@@ -260,6 +261,11 @@ class UncertaintyManager:
                                           PointCloud2,
                                           queue_size=5)
 
+    self._sync_sem_seg_pub = rospy.Publisher("/sync_semantic",
+                                          SyncSemantic,
+                                          queue_size=5)
+
+
     self.batch_size = params['network'].get('batch_size', 4)
     self.replay_old_pc = params.get('replay_old_pc', False)
 
@@ -400,6 +406,15 @@ class UncertaintyManager:
       uncertainty_msg.encoding = "rgb8"
       self._uncertainty_pub.publish(uncertainty_msg)
 
+
+
+      sync_sem_msg = SyncSemantic()
+      # sync_sem_msg.header = rgb_msg.header
+      sync_sem_msg.image = rgb_msg
+      sync_sem_msg.sem = semseg_msg
+      sync_sem_msg.depth = depth_msg
+      self._sync_sem_seg_pub.publish(sync_sem_msg)
+
     if type(self.net) == embodied_active_learning.utils.online_learning.OnlineLearner:
       # If network is online learner, we need to add training images
       # First downsample image, as otherwise the cuda memory is too much
@@ -412,14 +427,17 @@ class UncertaintyManager:
       gt_torch = torch.tensor(self.air_sim_semantics_converter.map_infrared_to_nyu(img_gt)).long()
       self.imgCount += 1
 
-      if self.imgCount < 650:
-        print("Waiting with online training for burn in period of 650 imgs")
-        # Burn in period of 650 images
-        return
-      if self.imgCount == 650:
-        print("reached 650 images. Going to reset planner")
-        start_stop_experiment_proxy = rospy.ServiceProxy("/start_stop_experiment", SetBool)
-        start_stop_experiment_proxy(True)
+      # if self.imgCount < 650:
+      #   print("Waiting with online training for burn in period of 650 imgs")
+      #   # Burn in period of 650 images
+      #   return
+      # if self.imgCount == 650:
+      #   print("reached 650 images. Going to reset planner")
+      #   start_stop_experiment_proxy = rospy.ServiceProxy("/start_stop_experiment", SetBool)
+      #   start_stop_experiment_proxy(True)
+
+
+
       # In case of map replay we also need to store the current pose of th epc
       pose = None
       if self.replay_old_pc:
