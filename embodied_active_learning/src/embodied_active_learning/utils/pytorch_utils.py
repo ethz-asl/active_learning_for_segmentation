@@ -6,7 +6,7 @@ from PIL import Image
 import torch.utils.data as torchData
 import numpy as np
 import os
-
+from typing import List
 
 def batch(iterable, n=1):
   """ Helper function that creates baches from any iterable """
@@ -62,6 +62,38 @@ def semseg_accum_confusion_to_iou(confusion_accum, ignore_zero=False):
 
 
 class DataLoader:
+
+  class CombinedDataset(torchData.Dataset):
+    def __init__(self, datasets, transform=None):
+      super().__init__()
+      self.datasets = datasets
+      self.transform = transform
+
+      lengths = [len(d) for d in datasets]
+      self._length = 0
+      for l in lengths:
+        self._length += l
+
+      idxs = np.asarray([idx for _ in range(l) for idx, l in enumerate(lengths)])
+      permuted_idxs = np.random.permutation(idxs)
+      self.idx_to_ds = permuted_idxs
+
+    def __getitem__(self, index):
+      ds_internal_idx = np.sum(self.idx_to_ds[0: index] == self.idx_to_ds[index])
+
+      data = self.datasets[self.idx_to_ds[index]][ds_internal_idx]
+
+      if self.transform != None:
+        data = self.transform(data)
+
+      return data
+
+
+
+    def __len__(self):
+      return self._length
+
+
   class DataLoaderSegmentation(torchData.Dataset):
     """ Datloader to load images produced by the data acquisitors"""
 
@@ -132,7 +164,26 @@ class DataLoader:
       return len(self.img_files)
 
 
+def get_nyu_custom_combined_ds(folder_path, num_imgs=None, transform=None, limit_imgs=None, cpu_mode=False, nyu_ratio = 1):
+
+  arisim_ds = DataLoader.DataLoaderSegmentation(folder_path, num_imgs=num_imgs,limit_imgs=limit_imgs, cpu_mode=False)
+  nyu_length = nyu_ratio * len(arisim_ds)
+  print("Returning dataset with nyu length: ", nyu_length)
+  import tensorflow as tf
+  import tensorflow_datasets as tfds
+  from embodied_active_learning.utils.tfds_to_torch import TFDataIterableDataset, data_converter
+  tf.config.set_visible_devices([], 'GPU')
+
+
+  data = tfds.load('Nyu_depth_full_v2_labeled',
+                   split='full',
+                   as_supervised=True)
+  traindata = TFDataIterableDataset(data.shuffle(buffer_size=len(data)).take(nyu_length).map(data_converter))
+
+  return DataLoader.CombinedDataset([arisim_ds, traindata], transform=transform)
+
 class Transforms:
+
   class Normalize:
     def __init__(self, mean, std, cpu_mode=False):
       self.mean = mean
@@ -146,6 +197,24 @@ class Transforms:
       image = (image - self.mean) / (self.std)
       return {'image': image, 'mask': mask}
 
+
+  class ToCuda:
+    def __init__(self):
+      pass
+
+    def __call__(self, sample):
+      sample['image'] = sample['image'].cuda()
+      sample['mask'] = sample['mask'].cuda()
+      return sample
+
+  class ToCpu:
+    def __init__(self):
+      pass
+
+    def __call__(self, sample):
+      sample['image'] = sample['image'].cpu()
+      sample['mask'] = sample['mask'].cpu()
+      return sample
   class AsFloat:
     def __init__(self):
       pass
