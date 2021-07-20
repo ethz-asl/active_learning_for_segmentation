@@ -3,7 +3,8 @@ Helper Class that converts AirSim Classes to NYU Classes
 """
 import yaml
 import numpy as np
-
+import os
+import pandas as pd
 
 class AirSimSemanticsConverter:
   """
@@ -12,9 +13,14 @@ class AirSimSemanticsConverter:
 
   def __init__(self, path_to_airsim_mapping):
     self.path_to_airsim_mapping = path_to_airsim_mapping
+    # TODO change, not hardcoded
+    path_to_csv = "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/nyu40_segmentation_mapping.csv"
     self.yaml_config = None
     with open(path_to_airsim_mapping) as file:
       self.yaml_config = yaml.load(file)
+
+    csv = pd.read_csv(path_to_csv)
+    self.idx_to_color = csv[['red','green', 'blue']].to_numpy()
 
     self.nyu_id_to_name = {}
     for _class in self.yaml_config['classMappings']:
@@ -57,7 +63,7 @@ class AirSimSemanticsConverter:
   def map_infrared_to_nyu(self, infrared_img):
     """
     Maps an infrared value to the original nyu class. For some reason setting airsim ID to 1 will not
-    result in an infrared value of 1 but 16.
+    result in an infrared value of 1 but 16./home/rene/thesis/debug_ss
     Args:
         infrared_img: Numpy array (h,w)
     """
@@ -74,3 +80,11 @@ class AirSimSemanticsConverter:
       infrared_img[invalid_ids] = 39
 
     return infrared_img
+
+  def semantic_prediction_to_nyu_color(self, predictions: np.ndarray):
+    predictions_col = np.stack([predictions, predictions, predictions], axis = -1)
+    for _class in np.unique(predictions.ravel()):
+      class_occurence = predictions == _class
+      predictions_col[class_occurence, :] =  self.idx_to_color[_class + 1,:]
+    return predictions_col
+

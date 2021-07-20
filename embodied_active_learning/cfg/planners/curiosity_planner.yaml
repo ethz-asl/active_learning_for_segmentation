@@ -77,7 +77,7 @@ trajectory_evaluator:
       camera_params_ns: "/unreal/unreal_ros_client/camera_params"
       min_impact_factor: 0.0001
 
-      weight_decay_power: 1 #0.5
+      weight_decay_power: 0.5 #0.5
       value_factor: 10
       frontier_voxel_value: 0.0
       new_voxel_value: 0.01

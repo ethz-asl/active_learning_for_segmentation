@@ -9,6 +9,7 @@ and starts the data acquisitor
 import time
 
 import rospy
+from sensor_msgs.msg import Image
 from std_srvs.srv import SetBool
 from std_msgs.msg import Int16
 
@@ -75,6 +76,8 @@ class ExperimentManager:
     self.train_count_sub = rospy.Subscriber("/train_count", Int16, self.train_count_callback)
     self.start_stop_service = rospy.Service("/start_stop_experiment", SetBool, self.run_service_callback)
     self.trajectory_fallowing_proxy = rospy.ServiceProxy("/airsim/trajectory_caller_node/set_running", SetBool)
+
+
 
     if self.launch_simulation():
       try:

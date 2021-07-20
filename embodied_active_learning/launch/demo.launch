@@ -1,9 +1,9 @@
 <launch>
     <!--  Experiment arguments -->
-    <arg name="experiment_name" value="SoftMax_dynamic_threshold_90_quantile_run_1"/>
+    <arg name="experiment_name" default="FixedLabels_SoftMax_burn_in_1"/>
     <param name="experiment_name" value="$(arg experiment_name)"/>
     <!-- located in this package, contains params for uncertainty estimation and data acquisation -->
-    <arg name="experiment_config_embodied" default="SoftMaxCE_with_dynamic_threshold_05.yaml"/>
+    <arg name="experiment_config_embodied" default="SoftMaxCE.yaml"/>
     <arg name="planner_type" default="mav_active_planner"/>
     <!--	    <arg name="planner_type" default="bump_and_rotate" />-->
     <!--	    <arg name="planner_type" default="space_filling_curves" />-->
@@ -14,7 +14,7 @@
 
     <!--	 Located in planner app package -->
     <arg name="planner_config" default="curiosity_planner.yaml"/>
-    <!--	<arg name="planner_config" default="exploration_planner.yaml"/>-->
+<!--    	<arg name="planner_config" default="exploration_planner.yaml"/>-->
     <!--	<arg name="planner_config" default="random_walker.yaml"/>-->
     <!--	<arg name="map_config" default="CityBuilding.yaml"/>-->
     <arg name="map_config" default="FullFlat/boundary.yaml"/>

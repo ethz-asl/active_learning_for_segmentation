@@ -252,7 +252,7 @@ def get_nyu_custom_combined_ds(folder_path, num_imgs=None, transform=None, limit
   #                  split='full',
   #                  as_supervised=True)
   # traindata = TFDataIterableDataset(data.shuffle(buffer_size=len(data)).take(nyu_length).map(data_converter))
-  traindata = NDataLoader.YUDepth(length = nyu_length)
+  traindata = DataLoader.NYUDepth(length = nyu_length)
   return DataLoader.CombinedDataset([arisim_ds, traindata], transform=transform)
 
 class Transforms:

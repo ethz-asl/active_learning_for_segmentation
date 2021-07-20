@@ -8,6 +8,7 @@ classMappings:
       - SM_Kitchen_Fur_Tile_2
       - Walls_StaticMesh.*
       - Cube.*
+      - SM_frame_door.*
   -
     classId: 1
     className: "floor"
@@ -24,6 +25,9 @@ classMappings:
       - SM_Kitchen_Fur_WallCabinet_Boxes
       - SM_Kitchen_Fur_WallCabinet_Doors
       - SM_Kitchen_Fur_FloorCabinet_Doors
+      - SM_BoxDoorKallax_.*
+      - SM_BoxDoor_.*
+      - SM_Rack_\dx\d.*
   -
     classId: 3
     className: "bed"
@@ -57,7 +61,6 @@ classMappings:
       - SM_door.*
       - SM_Door_.*
       - SM_MainDoor_\d*
-      - SM_frame_door.*
       - SM_handleMetal.*
   - classId: 8
     className: "window"
@@ -98,9 +101,8 @@ classMappings:
     classId: 14
     className: "shelves"
     regex:
-      - SM_BoxDoorKallax_.*
       - SM_Metal_Rack_.*
-      - SM_Rack_\dx\d.*
+      - SM_P1sh12.*
   -
     classId: 15
     className: "curtain"
@@ -112,7 +114,6 @@ classMappings:
     regex:
       - DawnDresser_.*
       - DresserWood_.*
-      - SM_P1sh12.*
   -
     classId: 17
     className: "pillow"
@@ -175,7 +176,6 @@ classMappings:
     classId: 28
     className: "box"
     regex:
-      - SM_Box.*
       - SM_BoxDrena_.*
       - SM_RackBox_.*
       - SM_BoxFiella_.*
@@ -244,13 +244,13 @@ classMappings:
     regex:
       - SM_Kitchen_KNOXHULT_Exhaust_Hood.*
       - SM_Kitchen_Fur_Exhaust_Hood
+      - SM_BakeOven_.*
+      - SM_WashingMachine_.*
   -
     classId: 38
     className: "otherfurniture"
     regex:
-      - SM_BakeOven_.*
       - SM_Branas_.*
-      - SM_WashingMachine_.*
       - Shoe_shelf_Hemnes.*
       - SM_Shoe_shelf_01
   -
@@ -308,7 +308,7 @@ classMappings:
       - SM_Table_Decor
       - WateringCan_.*
 airsimInfraredToNyu:
-  0: 9 # 0 is nothing -> Window
+  0: 8 # 0 is nothing -> Window
   13: 0
   22: 1
   28: 2
