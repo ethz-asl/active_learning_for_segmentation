@@ -1,0 +1,76 @@
+<launch>
+    <!--  Experiment arguments -->
+    <arg name="experiment_name" default="PlannerWithImpactFactorCuriosity_run1"/>
+    <arg name="config" default="single_tsdf_replay"/>
+    <arg name="config_gt" default="single_tsdf_replay_gt"/>
+    <arg name="step" default="step_001"/>
+    <arg name="rate" default="2"/> <!-- Hz -->
+    <arg name="images_to_label" default="0"/>
+    <arg name ="labeling_strategy" default="RANDOM"/>
+    <arg name ="labeling_type" default="2"/> <!-- 0 - Uncertainty no clustering in GT, 1 - Uncertainty clustering in GT -  2 Random -->
+
+    <arg name="experiment_config_embodied" default="RunScannnetPretrained.yaml"/>
+
+    <rosparam command="load" file="$(find embodied_active_learning)cfg/experiments/$(arg experiment_config_embodied)"/>
+
+    <arg name="output_folder" default="/home/rene/thesis/log/offline_training/PlannerWithImpactFactorCuriosity_run108_12__23_08_2021/"/> <!-- Hz -->
+    <arg name="experiment_path"  default="/media/rene/Empty/ImpactFactorSameRange/Curiosity_planner_density_dyn_th2030_22__27_09_2021/"/>
+
+
+    <!--         default="/media/rene/Empty/ExperimentsWithImpactFactor/PlannerWithImpactFactorCuriosity_run108_12__23_08_2021/"/>-->
+
+
+<!--LABELING_STRATEGY_UNIFORM = "UNIFORM"-->
+<!--LABELING_STRATEGY_RANDOM = "RANDOM"-->
+<!--LABELING_STRATEGY_GT = "GT"-->
+<!--LABELING_STRATEGY_UNSEEN_VOXELS = "UNSEEN_VOXELS"-->
+<!--LABELING_STRATEGY_NONE = "NONE"-->
+<!--LABELING_STRATEGY_WEIGHTS = "WEIGHTS"-->
+<!--LABELING_STRATEGY_MOST_SEEN_VOXELS = "MOST_SEEN_VOXELS"-->
+<!--LABELING_STRATEGY_UNCERTAINTY = "UNCERTAINTY"-->
+<!--LABELING_STRATEGY_MODEL_MAP_MISSMATCH = "MODEL_MAP_MISSMATCH"-->
+
+    <node name="dataset_player_with_gt_node" pkg="embodied_active_learning" type="dataset_player_with_gt_node.py" output="screen"
+          required="true" cwd="node">
+
+        <param name="step" value="$(arg step)"/>
+        <param name="experiment_path" value="$(arg experiment_path)"/>
+        <param name="replay_rate" value="$(arg rate)"/>
+        <param name="out_folder" value="$(arg output_folder)"/>
+        <param name="labeling_type" value="$(arg labeling_type)"/>
+        <param name ="images_to_label" value="$(arg images_to_label)"/>
+        <param name="labeling_strategy" value = "$(arg labeling_strategy)"/>
+    </node>
+
+
+<!--  <node name="panoptic_mapper" pkg="panoptic_mapping_ros" type="panoptic_mapper_node" output="screen">-->
+<!--    &lt;!&ndash; Config &ndash;&gt;-->
+<!--     <rosparam file="$(find panoptic_mapping_ros)/config/mapper/$(arg config).yaml"/>-->
+<!--     <remap from="/panoptic_mapper/serialized_map_in" to="/gt_labler_3d_node/serialized_map_out"/>-->
+<!--  </node>-->
+
+    <rosparam file="$(find panoptic_mapping_ros)/config/mapper/$(arg config).yaml"/>
+    <group ns = "TEST">
+    <rosparam file="$(find panoptic_mapping_ros)/config/mapper/$(arg config_gt).yaml"/>
+    </group>
+<!--  <node name="gt_labler_3d_node" pkg="embodied_active_learning" type="gt_labler_3d_node" output="screen">-->
+<!--    &lt;!&ndash; Config &ndash;&gt;-->
+<!--     <rosparam file="$(find panoptic_mapping_ros)/config/mapper/$(arg config).yaml"/>-->
+<!--     <rosparam file="$(find panoptic_mapping_ros)/config/mapper/$(arg config_gt).yaml"/>-->
+
+<!--     <remap from="color_image_in" to="/rgb"/>-->
+<!--     <remap from="depth_image_in" to="/depth"/>-->
+<!--     <remap from="segmentation_image_in" to="/semseg"/>-->
+<!--     <remap from="uncertainty_image_in" to="/uncertainty"/>-->
+
+<!--      <remap from="gt/color_image_in" to="/rgb"/>-->
+<!--     <remap from="gt/depth_image_in" to="/depth"/>-->
+<!--     <remap from="gt/segmentation_image_in" to="/gt"/>-->
+<!--     <remap from="gt/uncertainty_image_in" to="/uncertainty"/>-->
+
+
+<!--  </node>-->
+
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d  /home/rene/Desktop/labler.rviz" output="screen"/>
+</launch>

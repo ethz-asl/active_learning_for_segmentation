@@ -46,6 +46,7 @@ set(RPC_LIB rpc) # name of .a file with lib prefix
 message(STATUS "found RPC_LIB_INCLUDES=${RPC_LIB_INCLUDES}")
 find_package(airsim_ros_pkgs REQUIRED)
 
+set(CMAKE_CXX_STANDARD 17)
 
 catkin_package()
 
@@ -55,5 +56,16 @@ cs_add_executable(trajectory_caller_node
 cs_add_executable(curiosity_planner_node
         src/planner/curiosity_planner_node.cpp
         )
+#cs_add_executable(gt_labler_3d_node
+#        src/planner/gt_labler_3d_node.cpp
+#        )
+
+#cs_add_executable(pc_vis
+#        src/planner/pc_vis.cpp
+#        )
+
+
+
 target_link_libraries(trajectory_caller_node ${catkin_LIBRARIES} AirLib ${RPC_LIB})
 target_link_libraries(curiosity_planner_node ${catkin_LIBRARIES} AirLib ${RPC_LIB})
+#target_link_libraries(gt_labler_3d_node ${catkin_LIBRARIES} AirLib ${RPC_LIB})

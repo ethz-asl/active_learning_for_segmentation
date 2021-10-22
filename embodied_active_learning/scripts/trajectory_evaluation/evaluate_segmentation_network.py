@@ -15,10 +15,9 @@ from refinenet.models.resnet import rf_lw50, rf_lw101, rf_lw152
 import os
 import time
 import pandas as pd
-from embodied_active_learning.airsim_utils import semantics
-from embodied_active_learning.utils import pytorch_utils
+from embodied_active_learning.utils import airsim_semantics, pytorch_utils
 
-from embodied_active_learning.utils.online_learning import get_online_learning_refinenet
+from embodied_active_learning.online_learning.online_learning import get_online_learning_refinenet
 
 from densetorch.engine.miou import fast_cm
 
@@ -92,13 +91,20 @@ else:
 
 # network = torch.nn.DataParallel(network)
 nyuMappingsYaml = args.semantics_mapping
-airSimSemanticsConverter = semantics.AirSimSemanticsConverter(nyuMappingsYaml)
+airSimSemanticsConverter = airsim_semantics.AirSimSemanticsConverter(nyuMappingsYaml)
 
 # Taken from Refinenet Repo
-IMG_MEAN = torch.tensor(np.array([0.485, 0.456, 0.406]).reshape((3, 1, 1)))
-IMG_STD = torch.tensor(np.array([0.229, 0.224, 0.225]).reshape((3, 1, 1)))
+# IMG_MEAN = torch.tensor(np.array([0.485, 0.456, 0.406]).reshape((3, 1, 1)))
+# IMG_STD = torch.tensor(np.array([0.229, 0.224, 0.225]).reshape((3, 1, 1)))
+
+IMG_SCALE = 1.0 / 255
+IMG_MEAN =  torch.tensor(np.array([0.72299159, 0.67166396, 0.63768772]).reshape((3, 1, 1)))
+IMG_STD = torch.tensor(np.array([0.2327359 , 0.24695725, 0.25931836]).reshape((3, 1, 1)))
+
 transform = transforms.Compose(
   [pytorch_utils.Transforms.Normalize(IMG_MEAN, IMG_STD), pytorch_utils.Transforms.AsFloat()])
+# transform = transforms.Compose(
+#   [pytorch_utils.Transforms.AsFloat()])
 testLoader = data.DataLoader(
   pytorch_utils.DataLoader.DataLoaderSegmentation(testsetFolder, transform=transform, num_imgs=120),
   batch_size=8)

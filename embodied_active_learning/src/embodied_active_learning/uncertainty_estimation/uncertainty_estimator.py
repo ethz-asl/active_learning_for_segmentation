@@ -1,5 +1,4 @@
 import numpy as np
-import embodied_active_learning.airsim_utils.semantics as semantics
 import scipy
 import rospy
 
@@ -40,7 +39,7 @@ class DynamicThresholdWrapper(UncertaintyEstimator):
     ss, uncertanty = self.uncertanity_estimator.predict(image, gt_image)
     return ss, self.threshold_image(uncertanty)
 
-  def fit(self, all_uncertanties: list):
+  def fit(self, all_uncertanties: np.ndarray):
     """
     Retfits the threshold wrapper -> Recalculate threshold
     Args:
@@ -48,11 +47,11 @@ class DynamicThresholdWrapper(UncertaintyEstimator):
     """
     if self.update:
       # Calculate mean and variance of previous seen values
-      mean, var = scipy.stats.distributions.norm.fit(np.asarray(all_uncertanties).ravel())
+      mean, var = scipy.stats.distributions.norm.fit(all_uncertanties.ravel())
       # Calculate threshold based on normal distribution and provided quantile
       self.threshold = scipy.stats.distributions.norm.ppf(self.quantile, mean, var)
-      self.uncertanity_estimator.scale_max = np.max(np.asarray(all_uncertanties).ravel())
-      rospy.loginfo("Updated threshold to {}. New mean {}. Using Quantile {}".format(self.threshold, mean, self.quantile))
+      self.max_value = np.max(all_uncertanties.ravel())
+      rospy.loginfo("Updated threshold to {}. New mean {}. Using Quantile {}, Max Value: {}".format(self.threshold, mean, self.quantile, self.max_value))
 
 
 class ClusteredUncertaintyEstimator(UncertaintyEstimator):
@@ -72,12 +71,11 @@ class ClusteredUncertaintyEstimator(UncertaintyEstimator):
 
 
 class GroundTruthErrorEstimator(UncertaintyEstimator):
-  def __init__(self, model, semantics_converter: semantics.AirSimSemanticsConverter):
+  def __init__(self, model):
     """
     :param model: Function that maps an input numpy array to on output numpy array
     """
     self.model = model
-    self.semantics_converter = semantics_converter;
 
   def predict(self, image, gt_image):
     """
@@ -87,9 +85,8 @@ class GroundTruthErrorEstimator(UncertaintyEstimator):
         Second: Error Image [height, width, batch] float [0,1]
     """
     prediction = self.model(image)
-    gt_image = self.semantics_converter.map_infrared_to_nyu(gt_image)
     sem_seg = np.argmax(prediction, axis=-1).astype(np.uint8)
-    error = (sem_seg != gt_image).astype(np.float)
+    error = (sem_seg != gt_image).astype(np.float)*0.2
 
     return sem_seg, error
 

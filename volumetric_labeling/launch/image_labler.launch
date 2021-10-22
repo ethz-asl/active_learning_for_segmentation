@@ -1,0 +1,68 @@
+<launch>
+
+    <arg name="experiment_name" default="NYUSingleFlatPlanner"/>
+    <param name="experiment_name" value="$(arg experiment_name)"/>
+
+    <arg name="config" default="img_labler_config"/>
+    <arg name="panoptic_config" default="panoptic_config"/>
+    <!--  Experiment arguments -->
+
+    <arg name="experiment_config_embodied" default="RunScannnetDensity.yaml"/>
+    <rosparam command="load" file="$(find embodied_active_learning)cfg/experiments/$(arg experiment_config_embodied)"/>
+    <arg name="step" default="step_001"/>
+    <arg name="rate" default="3"/> <!-- Hz -->
+
+    <arg name="images_to_label" default="10"/>
+    <arg name="labeling_strategy" default="RANDOM"/>
+    <arg name="labeling_type_int" default="0"/>
+    <arg name="use_gt_clustering" default="true"/>
+
+
+    <arg name="output_folder" default="/media/rene/Empty/labeling_img"/>
+    <arg name="experiment_path" default="/media/rene/Empty/presentation/Curiosity_planner_clustered_959_01__12_10_2021"/>
+
+
+    <!-- Playback -->
+    <node name="dataset_player_node" pkg="volumetric_labeling" type="dataset_player_node.py"
+          output="screen"
+          required="true" cwd="node">
+
+        <param name="step" value="$(arg step)"/>
+        <param name="experiment_path" value="$(arg experiment_path)"/>
+        <param name="replay_rate" value="$(arg rate)"/>
+        <param name="out_folder" value="$(arg output_folder)"/>
+<!--        <param name="scoringMethod" value="$(arg labeling_type)"/>-->
+<!--        <param name="labeling_type" value="$(arg labeling_type_int)"/>-->
+        <param name="images_to_label" value="$(arg images_to_label)"/>
+        <param name="labeling_strategy" value="$(arg labeling_strategy)"/>
+    </node>
+
+    <!-- MAP -->
+    <group ns="volumetric_labler_node">
+        <group ns="panoptic">
+            <rosparam file="$(find volumetric_labeling)/config/$(arg panoptic_config).yaml"/>
+            <group ns="gt">
+                <rosparam file="$(find volumetric_labeling)/config/$(arg panoptic_config).yaml"/>
+            </group>
+        </group>
+    </group>
+
+    <node name="volumetric_labler_node" type="volumetric_labler_node" pkg="volumetric_labeling" required="true" output="screen">
+        <param name="useSpatialLabeling" value="false"/>
+<!--        <param name="scoringMethod" value="$(arg labeling_type)"/>-->
+        <param name="use_gt_clustering" value = "$(arg use_gt_clustering)"/>
+
+        <remap from="/volumetric_labler_node/panoptic/color_image_in" to="/rgb"/>
+        <remap from="/volumetric_labler_node/panoptic/depth_image_in" to="/depth"/>
+        <remap from="/volumetric_labler_node/panoptic/segmentation_image_in" to="/semseg"/>
+        <remap from="/volumetric_labler_node/panoptic/uncertainty_image_in" to="/uncertainty"/>
+
+        <remap from="/volumetric_labler_node/panoptic/gt/color_image_in" to="/rgb"/>
+        <remap from="/volumetric_labler_node/panoptic/gt/depth_image_in" to="/depth"/>
+        <remap from="/volumetric_labler_node/panoptic/gt/segmentation_image_in" to="/gt"/>
+        <remap from="/volumetric_labler_node/panoptic/gt/uncertainty_image_in" to="/uncertainty"/>
+    </node>
+
+
+    <node type="rviz" name="rviz" pkg="rviz" args="-d  /home/rene/Desktop/labler.rviz" output="screen"/>
+</launch>

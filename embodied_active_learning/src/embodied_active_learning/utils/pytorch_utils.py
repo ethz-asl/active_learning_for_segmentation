@@ -14,6 +14,13 @@ import torch
 
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
+import tensorflow_datasets as tfds
+import tensorflow as tf
+import semseg_density.data.scannet
+from semseg_density.data.images import convert_img_to_float
+import albumentations as A
+import re
+from albumentations.pytorch import ToTensorV2
 
 def batch(iterable, n=1):
   """ Helper function that creates baches from any iterable """
@@ -24,6 +31,38 @@ def batch(iterable, n=1):
     for ndx in range(0, l, n):
       yield iterable[ndx:min(ndx + n, l)]
 
+IMG_SCALE = 1.0 / 255
+IMG_MEAN = np.array([0.72299159, 0.67166396, 0.63768772]).reshape((1, 1, 3))
+IMG_STD = np.array([0.2327359 , 0.24695725, 0.25931836]).reshape((1, 1, 3))
+
+def prepare_img(img):
+    return (img * IMG_SCALE - IMG_MEAN) / IMG_STD
+
+
+
+
+def get_encoder_and_decoder_params(model):
+  """Filter model parameters into two groups: encoder and decoder."""
+  enc_params = []
+  dec_params = []
+  for k, v in model.named_parameters():
+    if bool(re.match(".*conv1.*|.*bn1.*|.*layer.*", k)):
+      enc_params.append(v)
+    else:
+      dec_params.append(v)
+  return enc_params, dec_params
+
+def create_optimizer(optim_type, parameters, **kwargs):
+  if optim_type.lower() == "sgd":
+    optim = torch.optim.SGD
+  elif optim_type.lower() == "adam":
+    optim = torch.optim.Adam
+  else:
+    raise ValueError(
+      "Optim {} is not supported. "
+      "Only supports 'SGD' and 'Adam' for now.".format(optim_type)
+    )
+  return optim(parameters, **kwargs)
 
 def semseg_compute_confusion(y_hat_lbl, y_lbl, num_classes, ignore_label):
   """ Helper function that computes the confusion matrix. (If possible use e.g. densetorch, as cython is faster """
@@ -66,6 +105,256 @@ def semseg_accum_confusion_to_iou(confusion_accum, ignore_zero=False):
 
   iou_mean = iou_per_class[seen_classes].mean()
   return iou_mean, iou_per_class, unseen_classes
+
+
+def get_validation_transforms(img_height = 480, img_width = 640, normalize = True, additional_targets = {'mask':'mask', 'weight': 'mask'}):
+
+  transforms = []
+  if normalize:
+    transforms.append(A.Normalize(mean=(0.72299159, 0.67166396, 0.63768772), std=(0.2327359 , 0.24695725, 0.25931836)))
+  else:
+    transforms.append(A.Normalize(mean=(0, 0, 0), std=(1 , 1, 1)))
+
+  transforms.append(ToTensorV2())
+
+  return A.Compose(transforms, additional_targets = additional_targets)
+
+
+def get_train_transforms(img_height = 480, img_width = 640, normalize = True, additional_targets = {'mask':'mask', 'weight': 'mask'}):
+
+  transforms = [
+        A.Resize(480, 640),
+        A.HorizontalFlip(p=0.5),
+        A.RandomSizedCrop(min_max_height=(img_height // 2, img_height), height=img_height, width=img_width, p=0.5),
+        A.RandomBrightnessContrast(p=0.8),
+        A.RandomGamma(p=0.8)
+    ]
+
+  if normalize:
+    transforms.append(A.Normalize(mean=(0.72299159, 0.67166396, 0.63768772), std=(0.2327359 , 0.24695725, 0.25931836)))
+  else:
+    transforms.append(A.Normalize(mean=(0, 0, 0), std=(1 , 1, 1)))
+
+  transforms.append(ToTensorV2())
+
+  return A.Compose(transforms, additional_targets = additional_targets)
+
+def get_nyu_dataset(normalize, length = 200):
+  import PIL.Image as PImage
+  class NYUDepth(Dataset):
+    """https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html"""
+
+    def __init__(self, root_dir="/cluster/scratch/zrene/nyu/dump", image_set='train', transforms=None, length=None):
+      """
+      Parameters:
+        root_dir (string): Root directory of the dumped NYU-Depth dataset.
+        image_set (string, optional): Select the image_set to use, ``train``, ``val``
+        transforms (callable, optional): Optional transform to be applied
+          on a sample.
+      """
+      self.root_dir = root_dir
+      self.image_set = image_set
+      self.transform = transforms
+
+      self.images = []
+      self.targets = []
+
+      img_list = self.read_image_list(os.path.join(root_dir, '{:s}.txt'.format(image_set)))
+
+      for img_name in img_list:
+        img_filename = os.path.join(root_dir, 'images/{:s}'.format(img_name))
+        target_filename = os.path.join(root_dir, 'labels/{:s}'.format(img_name))
+
+        if os.path.isfile(img_filename) and os.path.isfile(target_filename):
+          self.images.append(img_filename)
+          self.targets.append(target_filename)
+
+      if length is not None:
+        self.images = self.images[0:length]
+        self.targets = self.targets[0:length]
+
+      TRAINING_LABEL_MAP = [
+        256,
+        40, 40, 3, 22, 5, 40, 12, 38, 40, 40, 2, 39, 40, 40, 26, 40, 24, 40, 7, 40,
+        1, 40, 40, 34, 38, 29, 40, 8, 40, 40, 40, 40, 38, 40, 40, 14, 40, 38, 40,
+        40, 40, 15, 39, 40, 30, 40, 40, 39, 40, 39, 38, 40, 38, 40, 37, 40, 38, 38,
+        9, 40, 40, 38, 40, 11, 38, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 38, 13, 40, 40, 6, 40, 23, 40, 39, 10, 16, 40, 40, 40, 40, 38, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 38, 40, 39, 40, 40, 40, 40, 39, 38, 40, 40, 40,
+        40, 40, 40, 18, 40, 40, 19, 28, 33, 40, 40, 40, 40, 40, 40, 40, 40, 40, 38,
+        27, 36, 40, 40, 40, 40, 21, 40, 20, 35, 40, 40, 40, 40, 40, 40, 40, 40, 38,
+        40, 40, 40, 4, 32, 40, 40, 39, 40, 39, 40, 40, 40, 40, 40, 17, 40, 40, 25,
+        40, 39, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 39, 38, 38, 40, 40, 39, 40, 39, 40, 38, 39, 38, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 39, 40, 38, 40, 40, 38, 38, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 38, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 39, 40, 40, 40, 38, 40, 40, 39, 40, 40, 38, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 31, 40, 40, 40, 40, 40, 40, 40, 38, 40, 40, 38, 39,
+        39, 40, 40, 40, 40, 40, 40, 40, 40, 40, 38, 40, 39, 40, 40, 39, 40, 40, 40,
+        38, 40, 40, 40, 40, 40, 40, 40, 40, 38, 39, 40, 40, 40, 40, 40, 40, 38, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 38, 39, 40, 40, 40, 40, 40, 40, 40,
+        39, 40, 40, 40, 40, 40, 40, 38, 40, 40, 40, 38, 40, 39, 40, 40, 40, 39, 39,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 39, 39, 40, 40, 39, 39, 40, 40, 40, 40, 38, 40, 40, 38, 39,
+        39, 40, 39, 40, 39, 38, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40,
+        38, 40, 39, 40, 40, 40, 40, 40, 39, 39, 40, 40, 40, 40, 40, 40, 39, 39, 40,
+        40, 38, 39, 39, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 39, 40, 40, 40, 40,
+        39, 40, 40, 40, 40, 40, 39, 40, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 39, 38, 40, 40, 40, 40, 40, 40, 40, 39, 38, 39, 40,
+        38, 39, 40, 39, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40, 38, 40, 40, 40, 40,
+        40, 38, 40, 40, 39, 40, 40, 40, 39, 40, 38, 40, 40, 40, 40, 40, 40, 40, 40,
+        38, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 38,
+        40, 40, 38, 40, 40, 38, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 38, 40, 40, 38, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 38, 38, 38, 40, 40, 40, 38, 40, 40, 40,
+        38, 38, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+        38, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 38, 40, 38, 39, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 39, 40, 40, 40, 40, 38, 38, 40, 40,
+        40, 38, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40,
+        39, 40, 40, 39, 39, 40, 40, 40, 40, 40, 40, 40, 40, 39, 39, 39, 40, 40, 40,
+        40, 39, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 39, 40, 40,
+        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 38, 40, 40, 40, 40, 40, 40,
+        40, 39, 40, 40, 38, 40, 39, 40, 40, 40, 40, 38, 40, 40, 40, 40, 40, 38, 40,
+        40, 40, 40, 40, 40, 40, 39, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 40, 40
+      ]
+      self.label_map = np.array(TRAINING_LABEL_MAP) - 1
+
+    def read_image_list(self, filename):
+      """
+      Read one of the image index lists
+      Parameters:
+        filename (string):  path to the image list file
+      Returns:
+        list (int):  list of strings that correspond to image names
+      """
+      list_file = open(filename, 'r')
+      img_list = []
+
+      while True:
+        next_line = list_file.readline()
+
+        if not next_line:
+          break
+
+        img_list.append(next_line.rstrip())
+
+      import random
+      random.shuffle(img_list)
+      return img_list
+
+    def __len__(self):
+      return len(self.images)
+
+    def __getitem__(self, index):
+      image = np.asarray(PImage.open(self.images[index]))  # .convert('BGR'))
+      #       data = (np.asarray(PImage.open(self.images[index]).convert('RGB'))[:, :, 0:3]).transpose((2, 0, 1)).copy()
+      label = np.asarray(PImage.open(self.targets[index]))[:, :].copy()
+      label = self.label_map[label]
+
+      # data = {'image': torch.from_numpy(data).float(), 'mask': torch.from_numpy(label).long()}
+
+      data = self.transform(image=image, mask=label, weight=0 * label + 1)
+      return data
+
+  transforms = [
+    A.Resize(480, 640)
+  ]
+  if normalize:
+    transforms.append(A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)))
+  else:
+    transforms.append(A.Normalize(mean=(0, 0, 0), std=(1, 1, 1)))
+
+  transforms.append(ToTensorV2())
+  transforms = A.Compose(
+    transforms,
+    additional_targets={
+      'mask': 'mask',
+      'weight': 'mask'
+    }
+  )
+  return NYUDepth("/home/rene/Downloads/nyu_depth", transforms=transforms, length=length)
+
+def get_scannet_dataset(normalize, length = 30):
+  class TFDataIterableDataset(torch.utils.data.IterableDataset):
+    def __init__(self, ds, transform=None, length=200, normalize=False):
+      super().__init__()
+      self.tf_dataset = tfds.as_numpy(ds)
+      self.tf_iter = iter(self.tf_dataset)
+      self.cache = []
+      if transform is None:
+        transforms = [
+          A.Resize(480, 640)
+        ]
+        if normalize:
+          transforms.append(
+            A.Normalize(mean=(0.72299159, 0.67166396, 0.63768772), std=(0.2327359, 0.24695725, 0.25931836)))
+        else:
+          transforms.append(A.Normalize(mean=(0, 0, 0), std=(1, 1, 1)))
+
+        transforms.append(ToTensorV2())
+        transform = A.Compose(
+          transforms,
+          additional_targets={
+            'mask': 'mask',
+            'weight': 'mask'
+          }
+        )
+
+      self.transform = transform
+      self.length = length
+
+    def parse(self, item):
+      data = {
+        'image': (item[0] * 255).transpose(1, 2, 0),
+        'mask': item[1],
+        'weight': item[1] * 0 + 1 / (item[1].shape[0] * item[1].shape[1])
+      }
+
+      if self.transform != None:
+        data = self.transform(image=data['image'],
+                              mask=data['mask'], weight=data['weight'])
+      else:
+        data['image'] = torch.from_numpy(data['image'].transpose(2, 0, 1))
+        data['weight'] = torch.from_numpy(data['weight'])
+        data['mask'] = torch.from_numpy(data['mask'])
+      return data
+
+    def __iter__(self):
+      for idx, item in enumerate(self.tf_dataset):
+        if idx >= self.length:
+          break
+        yield self.parse(item)
+
+    def __getitem__(self, item):
+      # REALLY REALLY UGLY. DO NOT DO THIS
+      if (len(self.cache) <= item):
+        self.cache.append(next(self.tf_iter))
+      return self.parse(self.cache[item])
+
+    def __len__(self):
+      return self.length
+
+  data = tfds.load(f'scan_net/25k', split='train', as_supervised=True)
+  valdata = data.take(1000)
+  traindata = data.skip(1000)
+
+  def data_converter(image, label):
+    image = convert_img_to_float(image)
+    label = tf.cast(label, tf.int64)
+    # the output is 4 times smaller than the input, so transform labels
+    label = tf.image.resize(label[..., tf.newaxis], (120, 160),
+                            method='nearest')[..., 0]
+    # move channel from last to 2nd
+    image = tf.transpose(image, perm=[2, 0, 1])
+
+    return image, label
+  return TFDataIterableDataset(traindata.cache().prefetch(10000).map(data_converter), None, length = length, normalize=normalize)
 
 
 class DataLoader:
@@ -124,7 +413,7 @@ class DataLoader:
 
       for img_name in img_list:
         img_filename = os.path.join(root_dir, 'images/{:s}'.format(img_name))
-        target_filename = os.path.join(root_dir, 'depth/{:s}'.format(img_name))
+        target_filename = os.path.join(root_dir, 'labels/{:s}'.format(img_name))
 
         if os.path.isfile(img_filename) and os.path.isfile(target_filename):
           self.images.append(img_filename)
@@ -170,14 +459,16 @@ class DataLoader:
   class DataLoaderSegmentation(torchData.Dataset):
     """ Datloader to load images produced by the data acquisitors"""
 
-    def __init__(self, folder_path, num_imgs=None, transform=None, limit_imgs=None, cpu_mode=False):
+    def __init__(self, folder_path, num_imgs=None, verbose = True, transform=None, limit_imgs=None, cpu_mode=False):
       super().__init__()
-      print("Creating dataloader with params: {},{},{},{},{}".format(folder_path, num_imgs, transform, limit_imgs,
+      if verbose:
+        print("Creating dataloader with params: {},{},{},{},{}".format(folder_path, num_imgs, transform, limit_imgs,
                                                                      cpu_mode))
 
       if (os.path.exists(os.path.join(folder_path, "gain_info.txt"))):
         import pandas as pd
-        print("found gain info file. Going to order images by gains.")
+        if verbose:
+          print("found gain info file. Going to order images by gains.")
 
         def set_file_name(entry):
           entry['file'] = os.path.basename(entry['file'])
@@ -193,20 +484,27 @@ class DataLoader:
         for entry in files_sorted:
           self.img_files.append(os.path.join(folder_path, entry.replace("mask", "rgb")))
           self.mask_files.append(os.path.join(folder_path, entry))
-        print("found {} images".format(len(self.img_files)))
+        if verbose:
+          print("found {} images".format(len(self.img_files)))
 
       else:
         self.img_files = sorted(
           [os.path.join(folder_path, f) for f in os.listdir(folder_path) if "img" in f or "rgb" in f])
         self.mask_files = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) if "mask" in f])
+        for i in range(len(self.mask_files)):
+          print(self.img_files[i], ",", self.mask_files[i])
+          if (self.img_files[i].split("_")[-1] != self.mask_files[i].split("_")[-1]):
+            print("<<<<<<<")
 
         if limit_imgs is not None and limit_imgs != 0:
           self.img_files = self.img_files[::(len(self.img_files) // limit_imgs + 1)]
           self.mask_files = self.mask_files[::(len(self.mask_files) // limit_imgs + 1)]
-          print("[DATALOADER] limited images to {}".format(len(self.mask_files)))
+          if verbose:
+            print("[DATALOADER] limited images to {}".format(len(self.mask_files)))
 
       if (num_imgs is not None):
-        print("[DATALOADER] going to limit images to {}".format(num_imgs))
+        if verbose:
+          print("[DATALOADER] going to limit images to {}".format(num_imgs))
         self.img_files = self.img_files[0:num_imgs]
         self.mask_files = self.mask_files[0:num_imgs]
 

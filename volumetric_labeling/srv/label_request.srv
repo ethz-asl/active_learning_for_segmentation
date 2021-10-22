@@ -1,0 +1,7 @@
+int64 InstanceSize
+int64 LabelingType
+---
+int64 Size
+int64 Changed
+int64 InstanceClass
+int64[] GTClasses

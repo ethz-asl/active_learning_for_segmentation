@@ -22,7 +22,7 @@ typedef struct Waypoint {
   double gain{};
 } Waypoint;
 
-// Ros node to track spefic waypoints provided by the active planner.
+// Ros node to track spefic waypoints provided by the active mapper.
 // Calls the Airsim PID controller to track the points.
 class TrajectoryCallerNode {
 public:
@@ -101,6 +101,7 @@ TrajectoryCallerNode::TrajectoryCallerNode(const ros::NodeHandle &nh,
       "set_running", &TrajectoryCallerNode::setRunning, this);
 
   nh_private_.param<bool>("verbose", verbose, true);
+  verbose = true;
   nh_private_.param<bool>("move_in_yaw", only_move_in_yaw_direction, false);
   nh_private_.param<bool>("real_time", real_time, true);
   nh_private_.param<bool>("clear_wp_on_collision", clear_wp_on_collision, true);
@@ -113,6 +114,7 @@ TrajectoryCallerNode::TrajectoryCallerNode(const ros::NodeHandle &nh,
     airsimClient->armDisarm(true);
   }
   current_goal = nullptr;
+  std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>> TRAJECTORY CALLER NODE RUNNING " << std::endl;
 }
 
 void TrajectoryCallerNode::collisionCallback(const std_msgs::Bool &msg) {
@@ -220,7 +222,7 @@ void TrajectoryCallerNode::odomCallback(const nav_msgs::Odometry &msg) {
     if ((goal_position_ - current_position_).norm() < 0.1) {
       // Goal position reached, what about orientation?
       double yaw = tf::getYaw(msg.pose.pose.orientation);
-      if (defaults::angleDifference(goal_yaw, yaw) < 0.1) {
+      if (defaults::angleDifference(goal_yaw, yaw) < 0.2) {
         // Orientation reached
         if (verbose)
           std::cout << "reached goal point (rotation)" << std::endl;
@@ -266,6 +268,7 @@ void TrajectoryCallerNode::gainCallback(const std_msgs::Float32 msg) {
 
 void TrajectoryCallerNode::callback(
     const trajectory_msgs::MultiDOFJointTrajectory trajectory) {
+    std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> GOT TRAJECTORY MESSAGE" << std::endl;
   // Add all points of trajectory to point queue
   for (const auto &point : trajectory.points) {
     for (auto pose : point.transforms) {

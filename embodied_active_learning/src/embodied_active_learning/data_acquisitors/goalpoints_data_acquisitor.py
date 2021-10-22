@@ -13,23 +13,23 @@ from PIL import Image as PilImage
 from std_msgs.msg import Bool
 from embodied_active_learning.msg import waypoint_reached
 
+from embodied_active_learning.utils.config import DataAcquistorConfig
+
 
 class GoalpointsDataAcquisitor:
   """ Class that Samples Semantic+Depth+RGB images whenever a goalpoint is reached"""
 
-  def __init__(self, params, semantic_converter):
-    self.path = params.get("output_folder", "/tmp")
+  def __init__(self, config: DataAcquistorConfig, semantic_converter):
 
     self._rgb_sub = Subscriber("rgbImage", Image)
     self._depth_sub = Subscriber("depthImage", Image)
     self._semseg_sub = Subscriber("semsegImage", Image)
     self.running = False
 
-    self._point_reached = rospy.Subscriber("/planner/waypoint_reached", waypoint_reached, self.set_image_request)
+    self._point_reached = rospy.Subscriber("/mapper/waypoint_reached", waypoint_reached, self.set_image_request)
 
     self.image_requested = False
-
-    self.path = self.path + "/" + rospy.get_param("/experiment_name", "experiment") + "_" + str(time.time())
+    self.path = config.get_log_folder()
     self.semantic_converter = semantic_converter
 
     os.mkdir(self.path)

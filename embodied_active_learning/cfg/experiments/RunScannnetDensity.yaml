@@ -1,0 +1,70 @@
+uncertainty:
+  network:
+    name: "online-clustered-lightweight-refinenet"
+    size: 50
+    save_path: "/home/rene/thesis/checkpoints/"
+    checkpoint: "/home/rene/catkin_ws/src/refinenet_fork/light-weight-refinenet/scannet_50_classes_40_clusters.pth"
+#    checkpoint: "/home/rene/Downloads/same_domain_refinenet_0.pth" #"/home/rene/Downloads/scannet_refinenet_0.pth"# "/home/rene/Downloads/same_domain_refinenet_0.pth"
+
+    encoder:
+      optim_type: "adam"
+      lr: 0.00001
+    decoder:
+      optim_type: "adam"
+      lr: 0.0005
+
+  method:
+    type:  "model_built_in"
+    threshold: 120
+    quantile: 0.8
+    max: 200
+
+
+  rate: 1
+  replay_old_pc: false
+
+
+log:
+  log_path: "/media/rene/Empty/presentation/"
+  log_poses: true
+
+#data_generation:
+#  -
+#    type: "constantSampler"
+#    rate: 1
+#    output_folder: "/home/rene/thesis/imgs"
+#  -
+#    type: "goalpointSampler"
+#    output_folder: "/home/rene/thesis/imgs_goalpoint"
+
+experiment:
+  semantic_mapping_path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClassesFlat.yaml"
+  start_position_x: 0
+  start_position_y: 0
+  start_position_z: 0
+  start_position_yaw: 0
+  max_images: 3 # max number of full iterations
+
+pseudo_labler:
+  weights_method: "uncertainty"
+
+online_learning:
+  batch_size: 4
+  replay_buffer_size: 500
+  use_weights: false
+  old_domain_ratio:  0.3
+  sampling_strategy: "random"
+  replacement_strategy: "random"
+  save_frequency: 20
+  replay_batch_length: 4
+  min_buffer_length: 10
+  rate: 0.4
+  use_epoch_based_training: true
+  epoch_size: 150 #0 #150 #200 #150 #150 #200
+  freeze_bn: false
+  normalize_imgs: false
+  num_epochs: 15
+  reset_map: false
+
+minimap:
+  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/minimap_flat.pickle"
