@@ -57,7 +57,7 @@ def create_optimizer(optim_type, parameters, **kwargs):
 
 def get_online_learning_refinenet(size, classes=40, pretrained=True, params={}, save_path="", model_slug="",
                                   with_uncertainty=False, refitting_callback=lambda b: None,
-                                  replay_map=False):
+                                  replay_map=False) -> OnlineLearner:
   """ Wraps on online learning wrapper around a light weight refininet
   Args:
     size: encoder size of the refinenet

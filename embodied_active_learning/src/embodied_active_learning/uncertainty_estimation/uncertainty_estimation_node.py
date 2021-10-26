@@ -30,7 +30,6 @@ import embodied_active_learning.airsim_utils.semantics as semantics
 from embodied_active_learning.utils.online_learning import get_online_learning_refinenet
 from embodied_active_learning.msg import waypoint_reached
 
-from kimera_interfacer.msg import SyncSemantic
 
 def get_uncertainty_estimator_for_params(params: dict):
   """
@@ -261,11 +260,6 @@ class UncertaintyManager:
                                           PointCloud2,
                                           queue_size=5)
 
-    self._sync_sem_seg_pub = rospy.Publisher("/sync_semantic",
-                                          SyncSemantic,
-                                          queue_size=5)
-
-
     self.batch_size = params['network'].get('batch_size', 4)
     self.replay_old_pc = params.get('replay_old_pc', False)
 
@@ -355,20 +349,13 @@ class UncertaintyManager:
     # Publish uncertainty pointcloud with uncertainty as b value
     (x, y, z) = depth_to_3d(img_depth, camera)
     color = (uncertainty * 254).astype(np.uint8).reshape(-1)
-
-    # img_color = self.air_sim_semantics_converter.semantic_prediction_to_nyu_color(semseg).astype(np.uint8)#.reshape(-1)
-    # ''' Stack uint8 rgb image into a single float array (efficiently) for ros compatibility '''
-    # r = np.ravel(img_color[:, :, 0]).astype(int)
-    # g = np.ravel(img_color[:, :, 1]).astype(int)
-    # b = np.ravel(img_color[:, :, 2]).astype(int)
-    # color = np.left_shift(r, 16) + np.left_shift(g, 8) + b
     packed = pack('%di' % len(color), *color)
     unpacked = unpack('%df' % len(color), packed)
     data = (np.vstack([x, y, z, np.array(unpacked)])).T
 
     pc_msg = PointCloud2()
-    pc_msg.header.frame_id = rgb_msg.header.frame_id
-    pc_msg.header.stamp = rgb_msg.header.stamp
+    pc_msg.header.frame_id = depth_msg.header.frame_id
+    pc_msg.header.stamp = depth_msg.header.stamp
     pc_msg.width = data.shape[0]
     pc_msg.height = 1
     pc_msg.fields = [
@@ -389,13 +376,13 @@ class UncertaintyManager:
       uncertainty_uint8 = np.uint8(cm.seismic(uncertainty) *
                                    255)[:, :, 0:3]  # Remove alpha channel
 
-      # semseg = (cm.hsv(semseg / self.num_classes) * 255).astype(
-      #   np.uint8)[:, :, 0:3]  # Remove alpha channel
-      semseg = self.air_sim_semantics_converter.semantic_prediction_to_nyu_color(semseg)
+      semseg = (cm.hsv(semseg / self.num_classes) * 255).astype(
+        np.uint8)[:, :, 0:3]  # Remove alpha channel
+
       # Create and publish image message
       semseg_msg = Image()
       semseg_msg.header = rgb_msg.header
-      print("SEmseg image shape", semseg.shape)
+
       semseg_msg.height = img_shape[0]
       semseg_msg.width = img_shape[1]
       semseg_msg.step = rgb_msg.width
@@ -413,15 +400,6 @@ class UncertaintyManager:
       uncertainty_msg.encoding = "rgb8"
       self._uncertainty_pub.publish(uncertainty_msg)
 
-
-
-      sync_sem_msg = SyncSemantic()
-      # sync_sem_msg.header = rgb_msg.header
-      sync_sem_msg.image = rgb_msg
-      sync_sem_msg.sem = semseg_msg
-      sync_sem_msg.depth = depth_msg
-      self._sync_sem_seg_pub.publish(sync_sem_msg)
-
     if type(self.net) == embodied_active_learning.utils.online_learning.OnlineLearner:
       # If network is online learner, we need to add training images
       # First downsample image, as otherwise the cuda memory is too much
@@ -433,18 +411,6 @@ class UncertaintyManager:
       img_torch = torch.tensor(prepare_img(img).transpose(2, 0, 1)[None]).float()
       gt_torch = torch.tensor(self.air_sim_semantics_converter.map_infrared_to_nyu(img_gt)).long()
       self.imgCount += 1
-
-      if self.imgCount < 650:
-        print("Waiting with online training for burn in period of 650 imgs")
-        # Burn in period of 650 images
-        return
-      if self.imgCount == 650:
-        print("reached 650 images. Going to reset planner")
-        start_stop_experiment_proxy = rospy.ServiceProxy("/start_stop_experiment", SetBool)
-        start_stop_experiment_proxy(True)
-
-
-
       # In case of map replay we also need to store the current pose of th epc
       pose = None
       if self.replay_old_pc:
@@ -455,7 +421,6 @@ class UncertaintyManager:
           pose = (trans, rot)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
           rospy.logerr("[ERROR] Lookup error for pose of current image!")
-
 
       # Add training sample to online net
       self.net.addSample(img_torch, gt_torch, uncertainty_score=np.mean(uncertainty), pose=pose,

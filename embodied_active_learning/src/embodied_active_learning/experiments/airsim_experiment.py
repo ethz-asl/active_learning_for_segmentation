@@ -9,7 +9,6 @@ and starts the data acquisitor
 import time
 
 import rospy
-from sensor_msgs.msg import Image
 from std_srvs.srv import SetBool
 from std_msgs.msg import Int16
 
@@ -77,8 +76,6 @@ class ExperimentManager:
     self.start_stop_service = rospy.Service("/start_stop_experiment", SetBool, self.run_service_callback)
     self.trajectory_fallowing_proxy = rospy.ServiceProxy("/airsim/trajectory_caller_node/set_running", SetBool)
 
-
-
     if self.launch_simulation():
       try:
         # Start data qauisitors after simulation launched
@@ -87,10 +84,6 @@ class ExperimentManager:
       except ValueError as e:
         rospy.logerr("Could not create data acquisitor.\n {}".format(
           str(e)))
-
-      print("Stopping acc.")
-      for acq in self.data_aquisitors:
-        acq.running = False
 
   def launch_simulation(self):
     rospy.loginfo("Experiment setup: waiting for airsim to launch")
@@ -187,8 +180,8 @@ class ExperimentManager:
     def timer_cb(event):
       if time.time() - self.last_count >= 60 * 5:
         rospy.logerr("Did not get training event in last 5 minutes. Going to shut down node!")
-        # rospy.signal_shutdown("Heartbeat missing")
-        # exit()
+        rospy.signal_shutdown("Heartbeat missing")
+        exit()
 
     rospy.Timer(rospy.Duration(10), timer_cb)
 

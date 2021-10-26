@@ -6,14 +6,7 @@ from PIL import Image
 import torch.utils.data as torchData
 import numpy as np
 import os
-from typing import List
 
-import os
-import math
-import torch
-
-from PIL import Image
-from torch.utils.data import Dataset, DataLoader
 
 def batch(iterable, n=1):
   """ Helper function that creates baches from any iterable """
@@ -69,104 +62,6 @@ def semseg_accum_confusion_to_iou(confusion_accum, ignore_zero=False):
 
 
 class DataLoader:
-
-  class CombinedDataset(torchData.Dataset):
-    def __init__(self, datasets, transform=None):
-      super().__init__()
-      self.masks_names = ["mask"]
-      self.datasets = datasets
-      self.transform = transform
-
-      lengths = [len(d) for d in datasets]
-      self._length = 0
-      for l in lengths:
-        self._length += l
-
-      idxs = np.asarray([idx for _ in range(l) for idx, l in enumerate(lengths)])
-      permuted_idxs = np.random.permutation(idxs)
-      self.idx_to_ds = permuted_idxs
-
-    def __getitem__(self, index):
-      ds_internal_idx = np.sum(self.idx_to_ds[0: index] == self.idx_to_ds[index])
-
-      data = self.datasets[self.idx_to_ds[index]][ds_internal_idx]
-
-      if self.transform != None:
-        data = self.transform(data)
-
-      return data
-
-
-
-    def __len__(self):
-      return self._length
-
-
-  class NYUDepth(Dataset):
-    """https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html"""
-
-    def __init__(self, root_dir = "/cluster/scratch/zrene/nyu/dump", image_set='train', transforms=None, length = None):
-      """
-      Parameters:
-        root_dir (string): Root directory of the dumped NYU-Depth dataset.
-        image_set (string, optional): Select the image_set to use, ``train``, ``val``
-        transforms (callable, optional): Optional transform to be applied
-          on a sample.
-      """
-      self.root_dir = root_dir
-      self.image_set = image_set
-      self.transforms = transforms
-
-      self.images = []
-      self.targets = []
-
-      img_list = self.read_image_list(os.path.join(root_dir, '{:s}.txt'.format(image_set)))
-
-      for img_name in img_list:
-        img_filename = os.path.join(root_dir, 'images/{:s}'.format(img_name))
-        target_filename = os.path.join(root_dir, 'depth/{:s}'.format(img_name))
-
-        if os.path.isfile(img_filename) and os.path.isfile(target_filename):
-          self.images.append(img_filename)
-          self.targets.append(target_filename)
-
-      if length is not None:
-        self.images = self.images[0:length]
-        self.targets = self.targets[0:length]
-
-    def read_image_list(self, filename):
-      """
-      Read one of the image index lists
-      Parameters:
-        filename (string):  path to the image list file
-      Returns:
-        list (int):  list of strings that correspond to image names
-      """
-      list_file = open(filename, 'r')
-      img_list = []
-
-      while True:
-        next_line = list_file.readline()
-
-        if not next_line:
-          break
-
-        img_list.append(next_line.rstrip())
-
-      import random
-      random.shuffle(img_list)
-      return img_list
-
-    def __len__(self):
-      return len(self.images)
-
-    def __getitem__(self, index):
-      image = Image.open(self.images[index]).convert('RGB')
-      data = (np.asarray(Image.open(self.images[index]).convert('RGB'))[:, :, 0:3] / 255).transpose((2, 0, 1)).copy()
-      label = np.asarray(Image.open(self.targets[index]))[:, :].copy()
-      data = {'image': torch.from_numpy(data).float(), 'mask': torch.from_numpy(label).float()}
-      return data
-
   class DataLoaderSegmentation(torchData.Dataset):
     """ Datloader to load images produced by the data acquisitors"""
 
@@ -237,26 +132,7 @@ class DataLoader:
       return len(self.img_files)
 
 
-def get_nyu_custom_combined_ds(folder_path, num_imgs=None, transform=None, limit_imgs=None, cpu_mode=False, nyu_ratio = 1):
-
-  arisim_ds = DataLoader.DataLoaderSegmentation(folder_path, num_imgs=num_imgs,limit_imgs=limit_imgs, cpu_mode=cpu_mode)
-  nyu_length = int(nyu_ratio * len(arisim_ds))
-  print("Returning dataset with nyu length: ", nyu_length)
-  # import tensorflow as tf
-  # import tensorflow_datasets as tfds
-  # from embodied_active_learning.utils.tfds_to_torch import TFDataIterableDataset, data_converter
-  # tf.config.set_visible_devices([], 'GPU')
-  #
-  #
-  # data = tfds.load('Nyu_depth_full_v2_labeled',
-  #                  split='full',
-  #                  as_supervised=True)
-  # traindata = TFDataIterableDataset(data.shuffle(buffer_size=len(data)).take(nyu_length).map(data_converter))
-  traindata = DataLoader.NYUDepth(length = nyu_length)
-  return DataLoader.CombinedDataset([arisim_ds, traindata], transform=transform)
-
 class Transforms:
-
   class Normalize:
     def __init__(self, mean, std, cpu_mode=False):
       self.mean = mean
@@ -270,24 +146,6 @@ class Transforms:
       image = (image - self.mean) / (self.std)
       return {'image': image, 'mask': mask}
 
-
-  class ToCuda:
-    def __init__(self):
-      pass
-
-    def __call__(self, sample):
-      sample['image'] = sample['image'].cuda()
-      sample['mask'] = sample['mask'].cuda()
-      return sample
-
-  class ToCpu:
-    def __init__(self):
-      pass
-
-    def __call__(self, sample):
-      sample['image'] = sample['image'].cpu()
-      sample['mask'] = sample['mask'].cpu()
-      return sample
   class AsFloat:
     def __init__(self):
       pass
