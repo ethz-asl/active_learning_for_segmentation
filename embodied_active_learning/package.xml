@@ -17,10 +17,15 @@
     <build_depend>message_generation</build_depend>
     <exec_depend>message_runtime</exec_depend>
 
+    <depend>panoptic_mapping</depend>
+    <depend>panoptic_mapping_msgs</depend>
+    <depend>panoptic_mapping_ros</depend>
+    <depend>panoptic_mapping_utils</depend>
+
     <depend>active_3d_planning_core</depend>
     <depend>active_3d_planning_ros</depend>
     <depend>active_3d_planning_mav</depend>
-    <depend>active_3d_planning_voxblox</depend>
+    <depend>active_3d_planning_panoptic</depend>
 
 
 </package>
