@@ -10,16 +10,17 @@ from message_filters import ApproximateTimeSynchronizer, Subscriber
 from sensor_msgs.msg import Image
 import numpy as np
 from PIL import Image as PilImage
-from std_msgs.msg import Bool
+from embodied_active_learning.utils.config import DataAcquistorConfig
+from embodied_active_learning.utils.airsim.airsim_semantics import AirSimSemanticsConverter
 
 
 class ConstantRateDataAcquisitor:
   """ Class that Samples Semantic+Depth+RGB images in a constant rate"""
 
-  def __init__(self, params, semantic_converter):
+  def __init__(self, config: DataAcquistorConfig, semantic_converter: AirSimSemanticsConverter):
     self.running = False
-    self.rate = params.get("rate", 1)
-    self.path = params.get("output_folder", "/tmp")
+    self.rate = config.rate
+    self.path = config.output_folder
     self.period = 1 / self.rate
 
     self._rgb_sub = Subscriber("rgbImage", Image)
@@ -33,13 +34,8 @@ class ConstantRateDataAcquisitor:
 
     os.mkdir(self.path)
 
-    ts = ApproximateTimeSynchronizer(
-      [self._rgb_sub, self._depth_sub, self._semseg_sub],
-      10,
-      0.1,
-      allow_headerless=True)
+    ts = ApproximateTimeSynchronizer([self._rgb_sub, self._depth_sub, self._semseg_sub], 10, 0.1, allow_headerless=True)
     ts.registerCallback(self.callback)
-    self.capture_pub = rospy.Publisher("/image_captured", Bool, queue_size=10)
     self.running = True
     rospy.loginfo("Started ConstantRateDataAcquisitor")
 
@@ -48,10 +44,6 @@ class ConstantRateDataAcquisitor:
     if not self.running or (rospy.get_rostime() - self.last_request).to_sec() < self.period:
       # Too early, go back to sleep :)
       return
-
-    b = Bool()
-    b.data = True
-    self.capture_pub.publish(b)
 
     self.last_request = rospy.get_rostime()
 

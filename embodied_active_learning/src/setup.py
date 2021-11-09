@@ -4,7 +4,5 @@ setup(name='embodied_active_learning',
       packages=[
           'embodied_active_learning',
           'embodied_active_learning.data_acquisitor',
-          'embodied_active_learning.airsim_utils',
-          'embodied_active_learning.utils',
-          'embodied_active_learning.planner'
+          'embodied_active_learning.utils'
       ])

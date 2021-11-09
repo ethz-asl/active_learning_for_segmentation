@@ -39,8 +39,10 @@ class DynamicThresholdWrapper(UncertaintyEstimator):
     self.quantile = quantile
     self.update = update
     self.max_value = max_value
+    self.raw_value = None
 
   def threshold_image(self, uncertainty: np.ndarray):
+    self.raw_value = uncertainty.copy()
     uncertainty[uncertainty < self.threshold] = 0
     uncertainty = (uncertainty - self.threshold) / (self.max_value - self.threshold)
     uncertainty[uncertainty > 1] = 1

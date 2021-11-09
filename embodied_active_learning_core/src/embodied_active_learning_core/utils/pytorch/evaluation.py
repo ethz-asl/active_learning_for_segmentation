@@ -103,7 +103,7 @@ class EarlyStoppingWrapper:
       burn_in_steps: Burn in steps. How many steps the validation score will be ignored. (Use this to make sure to only start early stopping after e.g. episode 5)
       training_step: The current training iteration of the network. (Used to write to logfile if requested)
     """
-    self.best_miou = 0
+    self.best_miou = -1
     self.burn_in_steps = burn_in_steps
     self.model = model
     self.validation_dataloader = validation_dataloader
@@ -111,13 +111,13 @@ class EarlyStoppingWrapper:
     self.iteration = 0
     self.training_step = training_step
 
-    for i in range(len(additional_dataloaders) + 1):
+    for i in range(len(additional_dataloaders) + 1 if self.validation_dataloader is not None else 0):
       if len(dataset_names) < i:
         dataset_names.append(f"Dataset_{i}")
 
     self.dataset_names = dataset_names
 
-  def make_score_entry(self, mIoU: float, classes_iou: float, accuracy: float, dataset: str):
+  def make_score_entry(self, mIoU: float, classes_iou: List[float], accuracy: float, dataset: str):
     """ Converts data to a dict that can then be saved using e.g. pandas """
     scores = {'mIoU': mIoU, 'Accuracy': accuracy, 'Dataset': dataset, 'Iteration': self.iteration,
               'Step': self.training_step}
@@ -132,15 +132,19 @@ class EarlyStoppingWrapper:
       log_file: Where to save the log data (scores for all datasets). If file exists, data will be appended
     """
     all_scores = []
-    miou, classes_miou, accuracy = score_model_for_dl(self.model, self.validation_dataloader)
-    all_scores.append(self.make_score_entry(miou, classes_miou, accuracy, self.dataset_names[0]))
+    dataset_length = max([len(d) for d in self.dataset_names])  # For pretty printing
 
-    if verbose:
-      print("-" * 100)
-      dataset_length = max([len(d) for d in self.dataset_names])  # For pretty printing
-      color = '\33[32m' if miou >= self.best_miou else '\33[34m'
-      print(
-        color + f"[{self.dataset_names[0]:<{dataset_length}}] - Full mIou {np.mean(classes_miou):.2f}, mIoU {miou:.1f}%, Acc {accuracy:.2f}%" + '\33[0m')
+    if self.validation_dataloader is not None:
+      miou, classes_miou, accuracy = score_model_for_dl(self.model, self.validation_dataloader)
+      all_scores.append(self.make_score_entry(miou, classes_miou, accuracy, self.dataset_names[0]))
+
+      if verbose:
+        print("-" * 100)
+        color = '\33[32m' if miou >= self.best_miou else '\33[34m'
+        print(
+          color + f"[{self.dataset_names[0]:<{dataset_length}}] - Full mIou {np.mean(classes_miou):.2f}, mIoU {miou:.1f}%, Acc {accuracy:.2f}%" + '\33[0m')
+    else:
+      miou = -1  # No validation set provided
 
     if self.iteration < self.burn_in_steps or miou >= self.best_miou:
       torch.save(self.model.state_dict(), weights_file)
@@ -149,10 +153,11 @@ class EarlyStoppingWrapper:
     # Print information about all other datasets.
     for ds_idx, dataset in enumerate(self.additional_dataloaders):
       miou, classes_miou, accuracy = score_model_for_dl(self.model, dataset)
-      all_scores.append(self.make_score_entry(miou, classes_miou, accuracy, self.dataset_names[ds_idx + 1]))
+      all_scores.append(self.make_score_entry(miou, classes_miou, accuracy, self.dataset_names[
+        ds_idx + 1 if self.validation_dataloader is not None else 0]))
       if verbose:
         print(
-          f"[{self.dataset_names[ds_idx + 1]:<{dataset_length}}] - Full mIou {np.mean(classes_miou):.2f}, mIoU {miou:.1f}%, Acc {accuracy:.2f}%" + '\33[0m')
+          f"[{self.dataset_names[ds_idx + 1 if self.validation_dataloader is not None else 0]:<{dataset_length}}] - Full mIou {np.mean(classes_miou):.2f}, mIoU {miou:.1f}%, Acc {accuracy:.2f}%" + '\33[0m')
 
     self.iteration += 1
 

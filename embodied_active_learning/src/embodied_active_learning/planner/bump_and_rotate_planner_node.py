@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""
-"""
 import random
 import math
 
@@ -16,7 +14,7 @@ from geometry_msgs.msg import Transform, Quaternion, Point, Twist
 
 class BumpAndRotatePlanner:
   """
-  Simple implementation of a bump and rotate planner.
+  Simple implementation of a bump and rotate mapper.
   Driver in yaw direction until it hits something, then rotates for a random amount
   """
 
@@ -43,7 +41,7 @@ class BumpAndRotatePlanner:
     rospy.loginfo("_bump_and_rotate_planner running")
 
   def toggle_running(self, req):
-    """ Starts planner """
+    """ Starts mapper """
     self.running = req.data
     return True, 'running'
 

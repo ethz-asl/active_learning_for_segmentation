@@ -8,6 +8,7 @@ import math
 import numpy as np
 
 from embodied_active_learning_core.online_learning.sample import TrainSample
+from embodied_active_learning_core.utils.utils import importance_sampling_by_uncertainty
 
 
 class BufferUpdatingMethod(Enum):
@@ -51,16 +52,16 @@ class ReplayBuffer:
       if self.replacement_strategy == BufferUpdatingMethod.RANDOM:
         self.entries = random.sample(self.entries, self.max_buffer_length // 2)
       else:
-        raise NotImplementedError()
+        self.entries = importance_sampling_by_uncertainty(self.entries, self.max_buffer_length // 2)
     self.entries.append(sample)
 
   def draw_samples(self, sample_size: int) -> List[TrainSample]:
     if self.sampling_strategy == BufferSamplingMethod.RANDOM:
       return random.sample(self.entries, sample_size)
     elif self.sampling_strategy == BufferSamplingMethod.UNCERTAINTY:
-      raise NotImplementedError()
+      return importance_sampling_by_uncertainty(self.entries, sample_size)
     else:
-      raise ValueError("Unknown sampling strategy provied", self.sampling_strategy)
+      raise ValueError("Unknown sampling strategy provided", self.sampling_strategy)
 
   def get_all(self):
     random.shuffle(self.entries)
