@@ -1,0 +1,35 @@
+sensors:
+  frequency: 3 # Hz
+  availableSensors:
+    - name: "rgb"
+      callback: "RGBACallback"
+      publisher: "ImagePublisher"
+      topic: "~rgb"
+    - name: "depth"
+      callback: "depthCallback"
+      publisher: "ImagePublisher"
+      topic: "~depth"
+    - name: "semantic"
+      callback: "mono8Callback"
+      publisher: "ImagePublisher"
+      topic: "~semantic"
+
+    - name: "uncertainty"
+      callback: "depthCallback"
+      publisher: "ImagePublisher"
+      topic: "~uncertainty"
+
+    - name: "rgb_cam"
+      callback: "rgb_cam_cb"
+      publisher: "CameraPublisher"
+      topic: "~rgb_cam"
+
+    - name: "depth_cam"
+      callback: "depth_cam_cb"
+      publisher: "CameraPublisher"
+      topic: "~depth_cam"
+  availableCameras:
+    - name: "rgb"
+      topic: "~rgb/camera"
+      width: 256
+      height: 256
