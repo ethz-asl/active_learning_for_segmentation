@@ -1,5 +1,8 @@
 # Active_learning_for_segmentation
 
+
+![](documentation/movie.gif)
+
 ## Embodied Active Learning Package
 Main package built on top of all other packages. Conduct embodied experiments with either airsim or gibson
 
