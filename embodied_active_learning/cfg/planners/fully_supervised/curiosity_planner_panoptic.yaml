@@ -74,10 +74,10 @@ planner: #Config for 3D Reconstruction Planner
 
         bounding_volume_args: "/target_bounding_volume"
         camera_params_ns: "/unreal/unreal_ros_client/camera_params"
-        discount_factor: "weights"
+        discount_factor: "linear"
 
         value_factor: 1
-        new_voxel_value: 0.01
+        new_voxel_value: 0.05
         min_impact_factor: 0.0
 
         ray_angle_x: 0.002454

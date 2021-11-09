@@ -28,7 +28,7 @@ uncertainty:
     threshold_type: "Dynamic"
     quantile: 0.9
     threshold: 80
-    refitting_rate: 10
+    refitting_rate: 100
 
   rate: 0.8
   replay_old_pc: false

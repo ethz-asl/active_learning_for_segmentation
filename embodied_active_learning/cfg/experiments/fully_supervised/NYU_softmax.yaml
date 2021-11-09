@@ -25,13 +25,13 @@ uncertainty:
   method:
     type: "softmax"
     threshold_type: "Dynamic"
-    quantile: 0.9
-    threshold: 80
-    refitting_rate: 10
+    quantile: 0.8
+    threshold: 1
+    refitting_rate: 100
 
 
   rate: 1
-  replay_old_pc: false
+  replay_old_pc: true
 
 # If offline data should be collected
 data_generation:
