@@ -4,7 +4,9 @@
 ## Dependencies
   * `catkin_simple` ([https://github.com/catkin/catkin_simple](https://github.com/catkin/catkin_simple))
   * `mav_active_3d_path_planning` ([https://github.com/ethz-asl/mav_active_3d_planning](https://github.com/ethz-asl/mav_active_3d_planning))
+    * Branch: zrene/release_embodied
   * `panoptic_mapping` ([https://github.com/ethz-asl/panoptic_mapping](https://github.com/ethz-asl/panoptic_mapping))
+    * Branch: zrene/embodied_active_learning
   * `light_weight_refinenet` ([https://github.com/renezurbruegg/light-weight-refinenet](https://github.com/renezurbruegg/light-weight-refinenet))
   
 # Structure
