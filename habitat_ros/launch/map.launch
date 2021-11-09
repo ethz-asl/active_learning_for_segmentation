@@ -1,0 +1,105 @@
+<launch>
+
+
+    <!--  Experiment arguments -->
+    <arg name="experiment_name" default="CuriosityPlanner"/>
+    <param name="experiment_name" value="$(arg experiment_name)"/>
+    <!-- located in this package, contains params for uncertainty estimation and data acquisation -->
+<!--    <arg name="experiment_config_embodied" default="RunScannnetPretrained.yaml"/>-->
+
+    <!-- MAP -->
+    <arg name="experiment_config_embodied" default="RunScannnetDensityGibson.yaml"/>
+    <arg name="planner_config" default="curiosity_planner_panoptic.yaml"/>
+    <arg name="map_config" default="habitat/boundary.yaml"/>
+    <rosparam command="load" file="$(find embodied_active_learning)cfg/experiments/$(arg map_config)"/>
+    <rosparam command="load" file="$(find embodied_active_learning)cfg/experiments/$(arg experiment_config_embodied)"/>
+
+    <!-- Mapper -->
+    <arg name="config" default="single_tsdf"/> <!-- devel, detectron, rio, gt_seg, single_tsdf -->
+    <arg name="yaw_in_move_direction" default="true"/>
+    <arg name="delay" default="6.0"/>
+    <arg name="node_start_delay" default="6.0"/>
+    <arg name="uncertainty" default="true"/>
+
+
+    <node pkg="habitat_ros" name="habitat_ros" type="habitat_ros.py" output="screen" cwd="node">
+        <rosparam file="$(find habitat_ros)/config/default_params.yaml" command="load"/>
+    </node>
+
+
+
+<group ns = "airsim">
+        <node type="trajectory_caller_node" name="trajectory_caller_node" pkg="embodied_active_learning"
+          output="screen" >
+
+        <param name="real_time" value="true"/>
+        <param name="verbose" value="true"/>
+        <param name="move_in_yaw" value="true"/>
+
+        <remap from="/command/trajectory" to="/planner_cmd"/>
+        <remap from="/collision" to="/airsim/drone_1/collision"/>
+        <remap from="waypoint_reached" to="/planner/waypoint_reached"/>
+        <remap from="/gain" to="/planner/trajectory/gain"/>
+
+    </node>
+
+</group>
+
+        <group ns="uncertainty" if="$(arg uncertainty)">
+        <node name="uncertainty_node" pkg="embodied_active_learning" type="uncertainty_estimation_node.py"
+              output="screen"
+              required="true" cwd="node">
+            <remap from="odometry" to="/odom"/>
+            <remap from="cameraInfo" to="/habitat_ros/rgb_cam"/>
+            <remap from="rgbImage" to="/habitat_ros/rgb"/>
+            <remap from="depthImage" to="/habitat_ros/depth"/>
+            <remap from="semsegGtImage" to="/habitat_ros/semantic"/>
+        </node>
+    </group>
+
+    <node pkg="habitat_ros" name="pid" type="controllers.py" output="screen" cwd="node">
+    </node>
+
+    <group ns="planner">
+        <node name="planner_node" pkg="embodied_active_learning" type="curiosity_planner_node" output="screen"  required="true" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" >
+            <!-- Planner -->
+
+            <remap from="planner/colision" to="/airsim/drone_1/collision"/>
+            <remap from="planner/odometry" to="/odom"/>
+            <remap from="planner/command/trajectory" to="/planner_cmd"/>
+            <!-- Build the Planner by Configuration     -->
+            <rosparam command="load" file="$(find embodied_active_learning)/cfg/planners/$(arg planner_config)"/>
+            <rosparam file="$(find embodied_active_learning)/cfg/mapper/$(arg config).yaml"/>
+
+            <remap from="color_image_in" to="/semseg/rgb"/>
+            <remap from="depth_image_in" to="/semseg/depth"/>
+            <remap from="segmentation_image_in" to="/semseg/image"/>
+            <remap from="uncertainty_image_in" to="/semseg/uncertainty"/>
+            <remap from="labels_in" to="/segmentation_labels"/>
+
+<!--            /semseg/cam-->
+<!--/semseg/depth-->
+<!--/semseg/image-->
+<!--/semseg/points-->
+<!--/semseg/rgb-->
+<!--/semseg/uncertainty-->
+
+
+        </node>
+    </group>
+
+
+    <group ns="experiment">
+        <!-- Experiment launcher. Starts Planner, Captures Images etc. -->
+        <node name="experiment_node" pkg="embodied_active_learning" type="gibson_experiment.py" output="screen"
+              required="true" cwd="node">
+            <param name="ns_planner" value="/planner/planner_node/planner"/>
+            <param name="ns_airsim" value="/airsim/airsim_node"/>
+            <param name="delay" value="$(arg delay)"/>
+            <param name="startup_timeout" value="30.0"/>
+        </node>
+    </group>
+
+
+
+</launch>
