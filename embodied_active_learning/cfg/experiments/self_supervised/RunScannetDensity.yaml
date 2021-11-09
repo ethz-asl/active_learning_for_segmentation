@@ -1,0 +1,69 @@
+experiment:
+  semantic_mapping_path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClassesFlat.yaml"
+  start_position_x: 0
+  start_position_y: 0
+  start_position_z: 0
+  start_position_yaw: 0
+  max_iterations: 3 # max number of full iterations
+
+log:
+  log_path: "/media/rene/Empty/presentation/"
+  log_poses: true
+
+uncertainty:
+  network:
+    name: "online-clustered-lightweight-refinenet"
+    size: 50
+    save_path: "/home/rene/thesis/checkpoints/"
+    checkpoint: "/home/rene/catkin_ws/src/refinenet_fork/light-weight-refinenet/scannet_50_classes_40_clusters.pth"
+
+    encoder:
+      optim_type: "adam"
+      lr: 0.00001
+    decoder:
+      optim_type: "adam"
+      lr: 0.0005
+
+  method:
+    type: "model_built_in"
+    threshold: 120
+    quantile: 0.8
+    max: 200
+
+  rate: 1
+  replay_old_pc: false
+
+pseudo_labler:
+  weights_method: "uncertainty"
+
+online_learning:
+  # ------- Replay Config ----------
+  replay_buffer_size: 500
+  sampling_strategy: "random"
+  replacement_strategy: "random"
+
+  test_datasets:
+    - - "Test Studio"
+      - "/media/rene/Empty/TestSets/Flat/LivingRoomWithDresser"
+  replay_dataset_path: "/home/rene/thesis/log/offline_training/PlannerWithImpactFactorCuriosity_run108_12__23_08_2021/scannet"
+
+  old_domain_ratio: 0.1
+
+
+  # ------- Training Params ----------
+  min_buffer_length: 10  # Wait for this amount of images before training can start
+  use_bundle_based_training: true
+  bundle_size: 150
+
+  batch_size: 4
+  use_weights: false
+  normalize_imgs: false
+  freeze_bn: false
+
+  replay_batch_length: 4
+  save_frequency: 1 # Save best model after every training iteration
+  rate: 0.4
+
+
+minimap:
+  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/minimap_flat.pickle"

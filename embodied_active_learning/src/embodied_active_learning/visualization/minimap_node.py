@@ -17,8 +17,6 @@ import numpy as np
 import cv2
 from std_msgs.msg import Bool
 
-from visualization_msgs.msg import MarkerArray
-
 
 class MinimapManager:
 
@@ -28,8 +26,6 @@ class MinimapManager:
 
     self._odom_cb = rospy.Subscriber("odometry", Odometry, self.odom_cb)
     self._minimap_pub = rospy.Publisher("minimap", Image, queue_size=10)
-
-    self.markers_pub = rospy.Publisher("map_boundary", MarkerArray, queue_size=10)
 
     self.save_trajectory = False
     self.output_path = "/home/rene/thesis/trajectories/"
@@ -77,7 +73,6 @@ class MinimapManager:
     self.current_pose = msg.pose.pose
 
   def add_pose_to_map(self, msg):
-    print("GOT POSE CB")
     if msg.data and self.last_pose is not None:
       if self.current_pose is not None:
         # Draw arrow on map

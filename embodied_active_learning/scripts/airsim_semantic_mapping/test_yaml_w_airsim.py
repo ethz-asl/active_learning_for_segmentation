@@ -9,7 +9,7 @@ import airsim
 import numpy as np
 import matplotlib.pyplot as plt
 
-pathToAirsimMapping = '/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClasses.yaml'
+pathToAirsimMapping = '/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClassesFlat.yaml'
 with open(pathToAirsimMapping) as file:
     classMappings = yaml.load(file, Loader=yaml.FullLoader)
     airsim2Nyu = classMappings['airsimInfraredToNyu']
@@ -18,8 +18,7 @@ with open(pathToAirsimMapping) as file:
     print(
         "Going to overwrite semantic mapping of airsim using config stored at",
         pathToAirsimMapping)
-    client.client.call(
-        'simGetSegmentationObjectID', ".*",
+    client.simSetSegmentationObjectID(".*",
         40)  # Default assign otherpro to everything that is not matched
 
     for _class in classMappings['classMappings']:
@@ -28,7 +27,7 @@ with open(pathToAirsimMapping) as file:
                 _class['className'], _class['classId']))
             regexPattern = "{}".format("|".join(_class['regex']))
             print("{} : Regex Patterns: {}".format(classAndId, regexPattern))
-            m[_class['classId']] = _class['className']
+            # m[_class['classId']] = _class['className']
             for pattern in _class['regex']:
                 pattern = pattern
                 res = client.simSetSegmentationObjectID(pattern,
@@ -48,7 +47,7 @@ with open(pathToAirsimMapping) as file:
             print("airsim id", i)
             try:
                 print("{}:{}".format(i, airsim2Nyu[i]))
-                print(m[airsim2Nyu[i]])
+                # print(m[airsim2Nyu[i]])
             except:
                 print("otherpro")
         img_rgb = img1d.reshape(response.height, response.width, 3)

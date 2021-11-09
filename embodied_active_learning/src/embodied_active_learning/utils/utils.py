@@ -3,38 +3,6 @@ import numpy as np
 from sensor_msgs.msg import PointCloud2, PointField, Image, CameraInfo
 
 
-def importance_sampling_by_uncertainty(all_samples: dict, N=250):
-  """  Resample N elements from all_samples. Samples with higher uncertainty have a higher chance to be drown"""
-  ret_list = []
-  sum_probabilities = 0
-  for e in all_samples:
-    sum_probabilities += e['uncertainty']
-
-  skip_idx = []
-  for _ in range(N):
-    r = sum_probabilities * random.random()
-    sum_until_now = 0
-    for n, entry in enumerate(all_samples):
-      if n in skip_idx:
-        # allready sampled this element
-        continue
-
-      if (sum_until_now < r and ((sum_until_now + entry['uncertainty']) >= r)) or sum_probabilities == 0:
-        # sample this element.
-        ret_list.append(entry)
-        # remove this entry
-        sum_probabilities -= entry['uncertainty']
-        skip_idx.append(n)
-        break
-
-      sum_until_now += entry['uncertainty']
-
-  print("importance sampling by uncertainty score, sampled {} images: {}".format(len(ret_list), str(
-    [str(e['number']) + ":" + str(e['uncertainty']) for e in ret_list])))
-
-  return ret_list
-
-
 def depth_to_3d(img_depth, camera_info, distorted=False):
   """ Create point cloud from depth image and camera infos. Returns a single array for x, y and z coords """
   f, center_x, center_y = camera_info.K[0], camera_info.K[2], camera_info.K[
@@ -61,7 +29,7 @@ def depth_to_3d(img_depth, camera_info, distorted=False):
 
 def get_pc_for_image(color: np.ndarray, img_depth: Image, camera: CameraInfo) -> Image:
   """
-  Publishes an image as pointcloud
+  returns an image as pointcloud message
   Args:
     img_to_pub: Numpy array (H,W,1) to publish
     depth_msg:  Depth message containing depth image

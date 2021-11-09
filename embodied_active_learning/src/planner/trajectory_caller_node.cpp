@@ -22,7 +22,7 @@ typedef struct Waypoint {
   double gain{};
 } Waypoint;
 
-// Ros node to track spefic waypoints provided by the active planner.
+// Ros node to track spefic waypoints provided by the active mapper.
 // Calls the Airsim PID controller to track the points.
 class TrajectoryCallerNode {
 public:
@@ -183,11 +183,20 @@ void TrajectoryCallerNode::odomCallback(const nav_msgs::Odometry &msg) {
     goal_yaw = srv.request.yaw;
     if (real_time) {
       // Call PID node
-      if (client.call(srv)) {
+      bool res = true;
+      int r = 0;
+      while (!client.call(srv)) {
+        r++;
+        ros::Duration(0.2).sleep();
+        std::cout << "[ERROR CONNECTING] " << r << std::endl;
+        if (r >= 4) {
+
+        res = false;
+            break;
+        }
+      }
+      if (res) {
         followingGoal = true;
-      } else {
-        if (verbose)
-          std::cout << "client not ready yet " << std::endl;
       }
     } else {
       // Call airsim client to jump to position
@@ -217,10 +226,12 @@ void TrajectoryCallerNode::odomCallback(const nav_msgs::Odometry &msg) {
                                           current_goal->pose.translation.y,
                                           current_goal->pose.translation.z);
 
-    if ((goal_position_ - current_position_).norm() < 0.1) {
+    Eigen::Vector3d diff = goal_position_ - current_position_;
+    diff.z() = 0;
+    if (diff.norm() < 0.1) {
       // Goal position reached, what about orientation?
       double yaw = tf::getYaw(msg.pose.pose.orientation);
-      if (defaults::angleDifference(goal_yaw, yaw) < 0.1) {
+      if (defaults::angleDifference(goal_yaw, yaw) < 0.2) {
         // Orientation reached
         if (verbose)
           std::cout << "reached goal point (rotation)" << std::endl;
@@ -252,10 +263,8 @@ bool TrajectoryCallerNode::setRunning(std_srvs::SetBool::Request &req,
   res.success = true;
   if (req.data) {
     running = true;
-    std::cout << "Started trajectory caller" << std::endl;
   } else {
     running = false;
-    std::cout << "Stopped trajectory caller" << std::endl;
   }
   return true;
 }
