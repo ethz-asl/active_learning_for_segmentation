@@ -1,22 +1,20 @@
 """
 Samples a certain amount of random viewpoints and stores the RGBD Images + GT Semantic Classes
 """
-import pickle
-import random
 import torch
-from embodied_active_learning.utils.pytorch_utils import batch
+from embodied_active_learning_core.utils.utils import batch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from PIL import Image
-from refinenet.models.resnet import rf_lw50, rf_lw101, rf_lw152
+from refinenet.models.resnet import rf_lw101
 
 from refinenet.utils.helpers import prepare_img
 import os
 import re
 import argparse
 
-from embodied_active_learning.airsim_utils import semantics
+from embodied_active_learning.utils.airsim import airsim_semantics
 
 
 def str2bool(v):
@@ -120,7 +118,7 @@ parser.add_argument(
 
 
 args = parser.parse_args()
-air_sim_semantics_converter = semantics.AirSimSemanticsConverter(args.nyu_mapping)
+air_sim_semantics_converter = airsim_semantics.AirSimSemanticsConverter(args.nyu_mapping)
 
 with open(args.info_file, "r") as f:
     lines = [line.replace("[","").replace("]","").replace(";","").replace("\n","") for line in f]

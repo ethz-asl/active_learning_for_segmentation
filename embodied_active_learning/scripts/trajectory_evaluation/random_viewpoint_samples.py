@@ -2,9 +2,7 @@
 Samples a certain amount of random viewpoints and stores the RGBD Images + GT Semantic Classes
 """
 import pickle
-import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 import math
 import cv2
@@ -15,7 +13,7 @@ import time
 import argparse
 import tf
 
-from embodied_active_learning.airsim_utils import semantics
+from embodied_active_learning.utils.airsim import airsim_semantics
 
 
 def str2bool(v):
@@ -37,7 +35,7 @@ parser.add_argument('--n_imgs',
 parser.add_argument(
     '--min_sem_classes',
     help='Minimal amount of semantic classes in an image in order to be saved',
-    default=4,
+    default=5,
     type=int)
 
 parser.add_argument("--sample_z", help = "Sample z", type=str2bool, nargs='?',
@@ -66,7 +64,7 @@ parser.add_argument(
     '--nyu_mapping',
     help='Path to nyu mapping .yaml',
     default=
-    "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClasses.yaml",
+    "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/airsim/semanticClassesFlat.yaml",
     type=str)
 args = parser.parse_args()
 
@@ -75,7 +73,7 @@ pointsToSample = args.n_imgs
 minSemanticClasses = args.min_sem_classes
 nyuMappingsYaml = args.nyu_mapping
 
-airSimSemanticsConverter = semantics.AirSimSemanticsConverter(nyuMappingsYaml)
+airSimSemanticsConverter = airsim_semantics.AirSimSemanticsConverter(nyuMappingsYaml)
 airSimSemanticsConverter.set_airsim_classes()
 
 # Mapping from airsim type to string
@@ -102,6 +100,8 @@ lengthPerPixel = map_struct['dimensions'][
     'lengthPerPixel']  # Conversion from pixel to meters in unreal
 top_start, left_start = map_struct['start']['top'], map_struct['start'][
     'left']  # Start position of the dron
+top_start = top_start - 50
+left_start = left_start# - 400
 top_lim, left_lim = map_occupied.shape
 
 client = airsim.MultirotorClient()
@@ -120,7 +120,7 @@ while cnt < pointsToSample:
         # Sample random data points that is inside map
         top, left = np.random.randint(0,
                                       top_lim), np.random.randint(0, left_lim)
-        if map_occupied[top, left] != 0:
+        if map_occupied[top, left] != 1:
             continue
         yaw = np.random.rand() * 2 * math.pi
         break
@@ -135,23 +135,24 @@ while cnt < pointsToSample:
     currPose.orientation.z_val = np.sin(yaw / 2)
     currPose.orientation.w_val = np.cos(yaw / 2)
 
+    pitch = 0
+    roll  = 0
     if args.sample_z:
-        currPose.position.z_val = np.random.rand() * 1.5 - 1.5
+        currPose.position.z_val = np.random.rand() * 1.5 - 1
     if args.sample_pitch:
-        roll = 0
-        if args.sample_roll:
-            roll = -np.random.rand() * 0.5 * math.pi + 0.25*math.pi
-
         pitch = -np.random.rand() * 0.5 * math.pi + 0.25*math.pi
-        (x,y,z,w) = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-        currPose.orientation.x_val = x
-        currPose.orientation.y_val = y
-        currPose.orientation.z_val = z
-        currPose.orientation.w_val = w
+    if args.sample_roll:
+        roll = -np.random.rand() * 0.5 * math.pi + 0.25*math.pi
+
+    (x,y,z,w) = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+    currPose.orientation.x_val = x
+    currPose.orientation.y_val = y
+    currPose.orientation.z_val = z
+    currPose.orientation.w_val = w
 
     client.simSetVehiclePose(currPose, True)
 
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     responses = client.simGetImages([
         airsim.ImageRequest("front", airsim.ImageType.Scene),
@@ -202,6 +203,8 @@ while cnt < pointsToSample:
                                          (255, 0, 0), 10)
             previewImg = cv2.putText(previewImg, str(cnt), (start[1], start[0]),
                                      font, fontScale, fontColor, lineType)
+            Image.fromarray(previewImg).save(
+                os.path.join(outputFolder, 'selected_poses.png'))
     if not validImage:
         continue
 
@@ -226,5 +229,5 @@ while cnt < pointsToSample:
 
 Image.fromarray(previewImg).save(
     os.path.join(outputFolder, 'selected_poses.png'))
-plt.imshow(previewImg)
-plt.show()
+# plt.imshow(previewImg)
+# plt.show()
