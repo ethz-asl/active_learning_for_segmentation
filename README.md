@@ -1,61 +1,26 @@
-# Volumetric Labeling
-Package to select and annotate a subset of images or voxels.
+# Active_learning_for_segmentation
 
-## Installation
-Installation instructions for Linux.
+## Embodied Active Learning Package
+Main package built on top of all other packages. Conduct embodied experiments with either airsim or gibson
 
-**Prerequisites**
+See [here](embodied_active_learning)
 
-```shell script
-sudo apt-get install python-catkin-tools
-mkdir -p ~/catkin_ws/src
-cd ~/catkin_ws
-catkin init
-catkin config --extend /opt/ros/melodic  # exchange melodic for your ros distro if necessary
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
-catkin config --merge-devel
-```
 
-**Installation**
- 
-Source and compile:
-```shell script
-source ../../devel/setup.bash
-catkin build volumetric_labeling # Builds this package only
-```
+## Embodied Active Learning Core
+Contains main functionality needed for embodied active learning package. 
+- Models
+- Uncertanties
+- Replay / Trainingsbuffer
+- 
+See [here](embodied_active_learning_core)
 
-### Examples
-These example assume that a folder 'embodied_experiment_output' exists and contains folder 'step000' with pickled trainingsdata
 
-**Voxel Based**
-```
-roslaunch volumetric_labeling voxel_based_labler.launch output_folder:=<output> experiment_path:=embodied_experiment_output step:=step_000
-```
+## Volumetric Labeling
+Contains code for volumetric labeling and image selection.
+- Pseudo Label selection
+- Code to find subset of images or voxels to annotate
+- 
+See [here](volumetric_labeling)
 
-**Image Based**
-```
-roslaunch volumetric_labeling image_labler.launch output_folder:=<output> experiment_path:=embodied_experiment_output step:=step_000 images_to_label:=<n_imgs_to_label>
-```
-
-**Available Labeling Strategies**
-
-The following annotation strategies are available
-
-**Image Based** \
-Argument labeling_strategy
-- UNIFORM
-- RANDOM
-- UNLABELED_VOXELS
-- WEIGHTS
-- MOST_SEEN_VOXELS
-- UNCERTAINTY
-- UNCERTAINTY_RAW
-- MODEL_MAP_MISSMATCH
-
-**Voxel Based** \
-Argument scoring_method
-- SIZE
-- ENTROPY
-- BELONGS_PROBABILITY
-- UNCERTAINTY
-- RANDOM
+## Habitat ROS 
+A package that connects the habitat simulator with the ros interface is located [here](habitat_ros/README.md)
