@@ -1,0 +1,8 @@
+README.md
+setup.cfg
+setup.py
+src/embodied_active_learning_core/__init__.py
+src/embodied_active_learning_core.egg-info/PKG-INFO
+src/embodied_active_learning_core.egg-info/SOURCES.txt
+src/embodied_active_learning_core.egg-info/dependency_links.txt
+src/embodied_active_learning_core.egg-info/top_level.txt

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>volumetric_labeling</name>
+    <version>0.0.3</version>
+    <description>Package that implements different volumetric based labeling methods </description>
+
+    <author email="zrene@ethz.ch">René Zurbrügg</author>
+    <maintainer email="zrene@ethz.ch">René Zurbrügg</maintainer>
+
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <buildtool_depend>catkin_simple</buildtool_depend>
+
+
+    <build_depend>std_msgs</build_depend>
+    <build_depend>message_generation</build_depend>
+    <exec_depend>message_runtime</exec_depend>
+
+    <build_depend>rospy</build_depend>
+
+    <depend>panoptic_mapping</depend>
+    <depend>panoptic_mapping_msgs</depend>
+    <depend>panoptic_mapping_ros</depend>
+    <depend>panoptic_mapping_utils</depend>
+
+</package>

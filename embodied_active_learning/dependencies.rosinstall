@@ -1,0 +1,7 @@
+- git:
+    local-name: catkin_simple
+    uri: https://github.com/catkin/catkin_simple.git
+
+- git:
+    local-name: mav_acive_3d_path_planning
+    uri: https://github.com/ethz-asl/mav_active_3d_planning

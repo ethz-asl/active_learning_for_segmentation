@@ -1,0 +1,12 @@
+Metadata-Version: 1.2
+Name: embodied-active-learning-core
+Version: 0.0.1
+Summary: Package containing the core functionality of embodied_active_learning which is used in volumetric_labeling aswell as the data collection part
+Home-page: UNKNOWN
+Author: René Zurbrügg
+Author-email: zrene@ethz.ch
+Maintainer: René Zurbrügg
+Maintainer-email: zrene@ethz.ch
+License: BSD
+Description: UNKNOWN
+Platform: UNKNOWN

@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+**/.ipynb_checkpoints/
+*cmake-build-debug/
+.idea
+Unreal/
+**/test_data/

@@ -1,0 +1,3 @@
+[submodule "embodied_active_learning/src/embodied_active_learning/uncertainty_estimation/refinenet"]
+	path = embodied_active_learning/src/embodied_active_learning/uncertainty_estimation/refinenet
+	url = https://github.com/renezurbruegg/light-weight-refinenet

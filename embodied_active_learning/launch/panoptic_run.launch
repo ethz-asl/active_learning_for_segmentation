@@ -1,0 +1,148 @@
+<launch>
+    <!--  Experiment arguments -->
+    <arg name="experiment_name"             default="ExplorationPlanner"/>
+    <arg name="experiment_config_embodied"  default="fully_supervised/NYU_clustering.yaml"/>     <!-- Non map related config (Model, Uncertainty, Online Learning, ... -->
+    <arg name="planner_type"                default="mav_active_planner"/>  <!-- mav_active_planner | bump_and_rotate -->
+    <arg name="planner_config"              default="exploration_planner_panoptic.yaml"/> <!-- Planner config with gain formulation -->
+    <arg name="map_config"                  default="FullFlat/boundary.yaml"/> <!-- Map Boundaries to not drive in windows -->
+    <!-- Mapper -->
+    <arg name="config"                      default="single_tsdf"/> <!-- Map Configuration -->
+
+    <!-- publish uncertainty -->
+    <arg name="uncertainty"                 default="true"/>
+    <arg name="node_start_delay"            default="10"/>
+    <arg name="yaw_in_move_direction"       default="true"/>
+    <arg name="delay"                       default="6.0"/> <!-- Experiment Startup Delay -->
+
+    <!-- Airsim Node that Publishes Odometry and Images -->
+    <arg name="sim_time"                    default="true"/>
+    <arg name="mav_name"                    default="drone_1"/>
+    <arg name="output"                      default="screen"/>
+    <arg name="publish_clock"               default="true"/>
+    <arg name="is_vulkan"                   default="true"/>
+    <arg name="host"                        default="localhost"/>
+
+
+    <!-- If Experiment should be resumed from previous state -->
+    <arg name="resume"                      default = "false"/>
+    <arg name="folder_to_resume"            default="/media/rene/Empty/presentation/Curiosity_planner_clustered_959_01__12_10_2021"/>
+    <arg name="step_to_resume"              default="step_001" />
+    <arg name="load_file"                   default="$(arg folder_to_resume)/map/$(arg step_to_resume)/current_map.panmap"/>
+
+
+    <!-- Parse arguments to params -->
+    <param name="folder_to_resume"      value="$(arg folder_to_resume)"/>
+    <param name="step_to_resume"        value="$(arg step_to_resume)"/>
+    <param name="map_to_load"           value="$(arg load_file)"/>
+    <param name="resume"                value="$(arg resume)"/>
+    <param name="experiment_name"       value="$(arg experiment_name)"/>
+
+    <!-- use airsim simulated time -->
+    <param name="/use_sim_time"         value="$(arg sim_time)"/>
+    <rosparam command="load"             file="$(find embodied_active_learning)cfg/experiments/environments/$(arg map_config)"/>
+    <rosparam command="load"                file="$(find embodied_active_learning)cfg/experiments/$(arg experiment_config_embodied)"/>
+
+    <!-- Load maps -->
+    <group ns="uncertainty" if="$(arg uncertainty)">
+        <!--           Uncertainty Node, segments images and publishes segmentation + uncertainty-->
+        <node name="uncertainty_node" pkg="embodied_active_learning" type="uncertainty_estimation_node.py"
+              output="screen"
+              required="true" cwd="node">
+            <remap from="odometry" to="/airsim/airsim_node/$(arg mav_name)/odom_local_ned"/>
+            <remap from="cameraInfo" to="/airsim/airsim_node/$(arg mav_name)/front/Scene/camera_info"/>
+            <remap from="rgbImage" to="/airsim/airsim_node/$(arg mav_name)/front/Scene"/>
+            <remap from="depthImage" to="/airsim/airsim_node/$(arg mav_name)/front/DepthPlanner"/>
+            <remap from="semsegGtImage" to="/airsim/airsim_node/$(arg mav_name)/front/Infrared"/>
+        </node>
+    </group>
+
+
+    <group ns="experiment">
+        <!-- Experiment launcher. Starts Planner, Captures Images etc. -->
+        <node name="experiment_node" pkg="embodied_active_learning" type="airsim_experiment.py" output="screen"
+              required="true" cwd="node">
+            <param name="ns_planner" value="/planner/planner_node/planner"/>
+            <param name="ns_airsim" value="/airsim/airsim_node"/>
+            <param name="delay" value="$(arg delay)"/>
+            <param name="startup_timeout" value="30.0"/>
+            <remap from="rgbImage" to="/airsim/airsim_node/$(arg mav_name)/front/Scene"/>
+            <remap from="depthImage" to="/airsim/airsim_node/$(arg mav_name)/front/DepthPlanner"/>
+            <remap from="semsegImage" to="/airsim/airsim_node/$(arg mav_name)/front/Infrared"/>
+        </node>
+    </group>
+
+    <group ns="airsim">
+        <!-- Airsim position controller -->
+        <node name="pid_position_node" pkg="airsim_ros_pkgs" type="pd_position_controller_simple_node" output="log">
+            <remap from="/airsim_node/odom_local_ned" to="airsim_node/drone_1/odom_local_ned"/>
+            <remap from="/airsim_node/home_geo_point" to="airsim_node/origin_geo_point"/>
+            <remap from="/vel_cmd_world_frame" to="airsim_node/drone_1/vel_cmd_world_frame"/>
+            <remap from="/airsim_node/gps_goal" to="airsim_node/gps_goal"/>
+            <remap from="/airsim_node/local_position_goal/override" to="airsim_node/local_position_goal/override"/>
+            <param name="update_control_every_n_sec" type="double" value="0.01"/> <!-- 100 Hz -->
+
+            <param name="kp_x" type="double" value="0.50"/>
+            <param name="kp_y" type="double" value="0.50"/>
+            <param name="kp_z" type="double" value="0.20"/>
+            <param name="kp_yaw" type="double" value="0.3"/>
+            <param name="kd_x" type="double" value="0.3"/>
+            <param name="kd_y" type="double" value="0.3"/>
+            <param name="kd_z" type="double" value="0.2"/>
+            <param name="kd_yaw" type="double" value="0.1"/>
+            <param name="reached_thresh_xyz" type="double" value="0.02"/>
+            <param name="reached_yaw_degrees" type="double" value="0.1"/>
+        </node>
+
+        <!-- Node that connects trajectory planner with Airsim PID Position Controller -->
+        <node type="trajectory_caller_node" name="trajectory_caller_node" pkg="embodied_active_learning"
+              output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' ">
+            <param name="real_time" value="true"/>
+            <param name="verbose" value="false"/>
+            <param name="move_in_yaw" value="$(arg yaw_in_move_direction)"/>
+            <remap from="/local_position_goal" to="airsim_node/local_position_goal/override"/>
+            <remap from="/command/trajectory" to="$(arg mav_name)/command/trajectory"/>
+            <remap from="/odom" to="airsim_node/drone_1/odom_local_ned"/>
+            <remap from="/collision" to="/airsim/drone_1/collision"/>
+            <remap from="waypoint_reached" to="/planner/waypoint_reached"/>
+            <remap from="/gain" to="/planner/trajectory/gain"/>
+        </node>
+
+    </group>
+
+    <group ns="planner">
+        <node name="planner_node" pkg="embodied_active_learning" type="curiosity_planner_node" output="screen"
+              required="true" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' ">
+
+            <!-- Planner -->
+            <remap from="planner/colision" to="/airsim/drone_1/collision"/>
+            <!-- General Settings -->
+            <remap from="planner/odometry" to="/airsim/airsim_node/$(arg mav_name)/odom_local_ned"/>
+            <remap from="planner/command/trajectory" to="/airsim/$(arg mav_name)/command/trajectory"/>
+            <!-- Build the Planner by Configuration     -->
+            <rosparam command="load" file="$(find embodied_active_learning)/cfg/planners/$(arg planner_config)"/>
+            <rosparam file="$(find embodied_active_learning)/cfg/mapper/$(arg config).yaml"/>
+            <remap from="color_image_in" to="/semseg/rgb"/>
+            <remap from="depth_image_in" to="/semseg/depth"/>
+            <remap from="segmentation_image_in" to="/semseg/image"/>
+            <remap from="uncertainty_image_in" to="/semseg/uncertainty"/>
+        </node>
+
+        <!-- Use Bump and Rotate planner -->
+        <group if="$(eval planner_type == 'bump_and_rotate')">
+            <node name="bump_and_rotate_planner" pkg="embodied_active_learning" type="bump_and_rotate_planner_node.py"
+                  output="screen">
+                <remap from="command/trajectory" to="/airsim/$(arg mav_name)/command/trajectory"/>
+                <remap from="odometry" to="/airsim/airsim_node/drone_1/odom_local_ned"/>
+            </node>
+        </group>
+
+    </group>
+
+    <!-- RVIZ Visualization-->
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find embodied_active_learning)/cfg/rviz/embodied.rviz"
+          output="screen"/>
+
+    <include file="$(find embodied_active_learning)/launch/airsim_semseg.launch"/>
+    <!-- static world transform -->
+    <node pkg="tf" type="static_transform_publisher" name="tf_drone_world" args="0 0 0 0 0 0 1 /drone_1 /world 100"/>
+</launch>
