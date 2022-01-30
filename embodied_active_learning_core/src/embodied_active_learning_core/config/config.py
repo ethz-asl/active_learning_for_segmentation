@@ -27,13 +27,13 @@ UNCERTAINTY_SOFTMAX_STATIC_THRESHOLD = "softmax_static_threshold"
 @dataclass
 class UncertaintyEstimatorConfig(ParsableConfig):
   """ Config used for uncetainty estimation """
-  type: str = UNCERTAINTY_TYPE_SOFTMAX
+  type: str = UNCERTAINTY_MODEL_BUILT_IN
   from_logits: bool = True
 
   # If using thresholding
-  threshold: int = 0
-  quantile: int = 0.9
-  max: int = 0
+  threshold: int = 120
+  quantile: int = 0.7
+  max: int = 200
 
   @staticmethod
   def from_ros_config(namespace=""):
@@ -57,13 +57,14 @@ NETWORK_CONFIG_LIGHTWEIGHT_REFINENET = "lightweight-refinenet"
 NETWORK_CONFIG_ONLINE_LIGHTWEIGHT_REFINENET = "online-lightweight-refinenet"
 NETWORK_CONFIG_ONLINE_CLUSTERED_LIGHTWEIGHT_REFINENET = "online-clustered-lightweight-refinenet"
 
+
 @dataclass
 class NetworkConfig(ParsableConfig):
   """ Generic Config for a semantic segmentation network"""
-  name: str = "online-lightweight-refinenet"
+  name: str ="online-clustered-lightweight-refinenet"
   size: int = 50
   save_path: str = None
-  checkpoint: str = None
+  checkpoint: str =  "/home/rene/catkin_ws/src/refinenet_fork/light-weight-refinenet/scannet_50_classes_40_clusters.pth"
   classes: int = 40
   pretrained: bool = True
   groupnorm: bool = True
