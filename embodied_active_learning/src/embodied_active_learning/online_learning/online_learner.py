@@ -53,12 +53,12 @@ class OnlineLearner:
                                   normalize=not self.config.uncertainty_estimation_config.network_config.groupnorm)
     # Get trainings buffer
     self.training_buffer: ReplayBuffer = DatasetSplitReplayBuffer(
-      get_test_dataset_for_folder(self.config.online_learning_config.replay_dataset_path,
-                                  normalize=not self.config.uncertainty_estimation_config.network_config.groupnorm),
+      self.replay_set,
       max_buffer_length=self.online_learning_config.replay_buffer_size,
-      source_buffer_len=self.online_learning_config.old_domain_ratio,
+      source_buffer_len=200,
       replacement_strategy=BufferUpdatingMethod.from_string(self.online_learning_config.replacement_strategy),
-      sampling_strategy=BufferSamplingMethod.from_string(self.online_learning_config.sampling_strategy))
+      sampling_strategy=BufferSamplingMethod.from_string(self.online_learning_config.sampling_strategy),
+      split_ratio=self.online_learning_config.old_domain_ratio)
 
     self.model: torch.nn.Module = model
     self.best_miou = 0
@@ -312,6 +312,8 @@ class OnlineLearner:
     if self.config.online_learning_config.use_bundle_based_training:
       rospy.loginfo("Loading best model so far")
       self.model.load_state_dict(torch.load(weights_file))
+
+    self.train_count_pub.publish(self.train_iter)
 
     for callback in self.post_training_hooks:
       rospy.loginfo("Calling Post Training Hook")
