@@ -93,10 +93,10 @@ def get_uncertainty_estimator_for_config(config: Configs) -> Tuple[any, Uncertai
       uncertanity_estimator=estimator,
       initial_threshold=uncertainty_config.threshold, quantile=1, update=False)
 
-  elif uncertainty_config.threshold_type == uncertainty_config.THRESHOLD_TYPE_DYNAMIC:
+  elif uncertainty_config.threshold_type == uncertainty_config.THRESHOLD_TYPE_DYNAMIC or uncertainty_config.threshold_type == "model_built_in":
     estimator = DynamicThresholdWrapper(
       uncertanity_estimator=estimator,
-      initial_threshold=uncertainty_config.threshold, quantile=uncertainty_config.max, update=True)
+      initial_threshold=uncertainty_config.threshold, quantile=uncertainty_config.quantile, update=True, max_value=uncertainty_config.max)
 
   if estimator is None:
     raise ValueError("Could not find estimator for specified parameters")
@@ -119,19 +119,19 @@ def get_uncertainty_estimator_for_config(config: Configs) -> Tuple[any, Uncertai
         for b in batch(to_be_used, 4):
           input = []
           for item in b:
-            if item.mask is None:
-              continue
+            # if item.mask is None:
+            #   continue
             entry = online_learner.train_transforms(
               image=item.image,
-              mask=item.mask,
-              weight=item.mask  # not used
+              mask=item.mask if item.mask is not None else item.gt_mask,
+              weight=item.mask if item.mask is not None else item.gt_mask# not used
             )
             input.append(entry['image'])
 
           input = torch.stack(input).to(device)
           yield input.cuda()
 
-      with UncertaintyFitter(online_learner.model, total_features=10000, features_per_batch=500) as fitter:
+      with UncertaintyFitter(online_learner.model, total_features=20000, features_per_batch=1000) as fitter:
         for b in train_data_generator():
           fitter(b)
 
@@ -401,7 +401,7 @@ class UncertaintyManager:
         else:  # Otherwise save it as last seen sample that will be added by training callback
           self.last_training_sample = sample
 
-        if self.config.log_config.log_poses:
+        if self.config.log_config.log_poses and sample.transform is not None:
           out_folder = self.config.log_config.get_pose_log_folder()
           with open(os.path.join(out_folder, "poses.csv"), "a+") as f:
             f.write(
