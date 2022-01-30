@@ -408,10 +408,17 @@ class UncertaintyManager:
               f"{sample.transform.translation.x},{sample.transform.translation.y},{sample.transform.translation.z}," +
               f"{sample.transform.rotation.x},{sample.transform.rotation.y},{sample.transform.rotation.z},{sample.transform.rotation.w}\n")
 
+        print("checking", self.net.samples_seen, " with ", self.config.online_learning_config.bundle_size)
         # Check if epoch has been reached
         if self.net.samples_seen > 0 and self.net.samples_seen % self.config.online_learning_config.bundle_size == 0:
           self.net.epoch_size_reached = True
-
+          # self.config.online_learning_config.bundle_size = 100 #resetting to 100
+        #
+        # if self.net.samples_seen > 0 and self.net.samples_seen % 80 == 0: # refitting step
+        #   self.net.start_stop_experiment_proxy(False)
+        #   for c in self.net.post_training_hooks:
+        #     c(self.net)
+        #   self.net.start_stop_experiment_proxy(True)
 
 if __name__ == '__main__':
   rospy.init_node('uncertainty_estimation_node', anonymous=True)
