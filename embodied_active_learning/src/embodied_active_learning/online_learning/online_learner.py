@@ -28,6 +28,7 @@ from embodied_active_learning_core.utils.pytorch.evaluation import EarlyStopping
 from embodied_active_learning_core.utils.pytorch.image_transforms import prepare_img
 from panoptic_mapping_msgs.srv import SaveLoadMap
 
+from embodied_active_learning.utils.utils import MatterportSemanticsConverter
 
 class OnlineLearner:
   """
@@ -45,7 +46,11 @@ class OnlineLearner:
 
     # Function that will be called once the leraning process is done (e.g. refitting of GMM for uncertainty)
     self.post_training_hooks: List[Optional[Callable]] = []  # Functions
+    print("Create replay DS for DS located at:", self.config.online_learning_config.replay_dataset_path)
 
+
+    self.replay_set = get_test_dataset_for_folder(self.config.online_learning_config.replay_dataset_path,
+                                  normalize=not self.config.uncertainty_estimation_config.network_config.groupnorm)
     # Get trainings buffer
     self.training_buffer: ReplayBuffer = DatasetSplitReplayBuffer(
       get_test_dataset_for_folder(self.config.online_learning_config.replay_dataset_path,
@@ -72,6 +77,8 @@ class OnlineLearner:
     self.train_count_pub = rospy.Publisher("/train_count", Int16, queue_size=10)
     self.train_transforms = get_train_transforms(img_height=480, img_width=640,
                                                  normalize=self.online_learning_config.normalize_imgs)
+
+    self.mp_converter = MatterportSemanticsConverter()
 
   def __call__(self, *args):
     with torch.no_grad():
@@ -124,11 +131,34 @@ class OnlineLearner:
         valid_ratio = 0.15
         valid_end = math.ceil(valid_ratio * len(to_be_used) + 1)
         valid: List[TrainSample] = to_be_used[:valid_end]
-        valid_ds = [{'image': torch.from_numpy(
-          prepare_img(sample.image, normalize=self.online_learning_config.normalize_imgs).transpose(2, 0, 1)).unsqueeze(
-          0),
-                     'mask': torch.from_numpy(sample.mask).unsqueeze(0)} for sample in valid]
+
+        def convert_mp_to_nyu(labels):
+          return self.mp_converter.get_labels_without_void(self.mp_converter.map_mp_to_nyu(labels))
+
+        if not self.online_learning_config.use_pseudo_labels:
+          valid_ds = [{'image': torch.from_numpy(
+            prepare_img(sample.image, normalize=self.online_learning_config.normalize_imgs).transpose(2, 0,
+                                                                                                      1)).unsqueeze(
+            0),
+            'mask': torch.from_numpy(convert_mp_to_nyu(sample.gt_mask)).unsqueeze(0)} for sample in valid]
+        else:
+          valid_ds = [{'image': torch.from_numpy(
+            prepare_img(sample.image, normalize=self.online_learning_config.normalize_imgs).transpose(2, 0, 1)).unsqueeze(
+            0),
+                       'mask': torch.from_numpy(sample.mask).unsqueeze(0)} for sample in valid]
         to_be_used = to_be_used[valid_end:]
+
+        #   item.mask = convert_mp_to_nyu(item.gt_mask)
+        #   self.valid_gt_ds = [{'image': torch.from_numpy(
+        #     prepare_img(sample.image, normalize=self.online_learning_config.normalize_imgs).transpose(2, 0, 1)).unsqueeze(
+        #     0),'mask': torch.from_numpy(self.mp_converter.get_labels_without_void(self.mp_converter.map_mp_to_nyu(sample.gt_mask))).unsqueeze(0)} for sample in valid]
+        # else:
+        #   self.valid_gt_ds = [{'image': torch.from_numpy(
+        #     prepare_img(sample.image, normalize=self.online_learning_config.normalize_imgs).transpose(2, 0, 1)).unsqueeze(
+        #     0),'mask': torch.from_numpy(self.mp_converter.get_labels_without_void(self.mp_converter.map_mp_to_nyu(sample.gt_mask))).unsqueeze(0)} for sample in valid]
+        #   # self.valid_gt_ds_eigen13 = [{'image': torch.from_numpy(
+        #   #   prepare_img(sample.image, normalize=self.online_learning_config.normalize_imgs).transpose(2, 0, 1)).unsqueeze(
+        #   #   0),'mask': torch.from_numpy(self.mp_converter.get_labels_without_void(self.mp_converter.map_mp_to_eigen(sample.gt_mask))).unsqueeze(0)} for sample in valid]
 
     else:
       to_be_used: List[TrainSample] = self.training_buffer.draw_samples(
@@ -136,7 +166,7 @@ class OnlineLearner:
       valid_ds = None  # No validation set in full online learning
       if self.config.online_learning_config.use_pseudo_labels:
         # Request pseudo labels for images
-        self.pseudo_labler.label_many(to_be_used)
+        self.pseudo_labler.label_many(to_be_used, use_gt = True)
 
     t1 = time.time()
     test_loaders = []
@@ -149,10 +179,30 @@ class OnlineLearner:
           additional_targets={'mask': 'mask'}), num_imgs=120,
                                verbose=False), batch_size=8))
 
+    def convert_mp_to_nyu(labels):
+      return self.mp_converter.get_labels_without_void(self.mp_converter.map_mp_to_nyu(labels))
+
+    def convert_mp_to_eigen(labels):
+      return self.mp_converter.get_labels_without_void(self.mp_converter.map_mp_to_eigen(labels))
+    #
+    # test_names.append("Test Dataset")
+    # from embodied_active_learning_core.semseg.datasets import dataset_manager
+    # test_ds = dataset_manager.get_test_dataset_for_folder("/home/rene/habitat_test/Scene000", self.online_learning_config.normalize_imgs, mapping_fn=convert_mp_to_nyu)
+    # # test_ds = dataset_manager.get_test_dataset_for_folder("/home/rene/habitat_test/Scene002", self.online_learning_config.normalize_imgs, mapping_fn=convert_mp_to_nyu)
+    # test_loaders.append(torch.utils.data.DataLoader(test_ds))
+    # Also add replay set TODO(zrene) move this to generic loader to use with config.
+    # test_names.append("Replay Dataset")
+    # test_loaders.append(torch.utils.data.DataLoader(self.replay_set))
+    #
+    # test_names.append("GT Validation Dataset")
+    # test_loaders.append(self.valid_gt_ds)
+    # test_names.append("GT Validation Dataset (eigen13)")
+    # test_loaders.append(self.valid_gt_ds_eigen13)
+
     score_file = os.path.join(self.config.log_config.get_log_folder(), "scores.csv")
     weights_file = os.path.join(self.config.log_config.get_checkpoint_folder(), f"best_iteration_{self.train_iter}.pth")
     early_stopping = EarlyStoppingWrapper(self.model, valid_ds, test_loaders, dataset_names=['Validation', *test_names],
-                                          training_step=self.train_iter)
+                                          training_step=self.train_iter, only_eval_when_better = True)
 
     if self.train_iter == 0:
       # Print First Score Values
@@ -168,7 +218,7 @@ class OnlineLearner:
             m.eval()
 
       device = next(self.model.parameters()).device
-
+      print("to be used size:", len(to_be_used))
       for b in batch(to_be_used, batch_size):
         loss = torch.tensor(0.0).cuda()
         predicted_images_cnt = 0
@@ -177,9 +227,22 @@ class OnlineLearner:
         input = []
         weights = []
 
+        if not self.online_learning_config.use_pseudo_labels:
+          print("USING GT LABELS INSTEAD OF PROJECTIONS FOR TRAINING!!!!!!!")
+
         for item in b:
+          # for s in b:
+          #   if s.is_gt_sample:
+          #     print("GT sample:")
+          #     print(s)
+          #     import numpy as np
+          #     print("IMAGE UNIQU", np.unique(s.image))
+          #     print("MAK:", np.unique(s.mask))
+          #     print("GT MASK:", np.unique(s.gt_mask))
+          #     print("="*200)
           if not self.online_learning_config.use_pseudo_labels:
-            item.mask = item.gt_mask
+            item.mask = convert_mp_to_nyu(item.gt_mask)
+
 
           # Pseudo Label mask is missing (maybe collected in parallel to training start?)
           if item.mask is None:
