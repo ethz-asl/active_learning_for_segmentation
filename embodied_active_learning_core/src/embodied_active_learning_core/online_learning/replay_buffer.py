@@ -101,15 +101,16 @@ class DatasetSplitReplayBuffer(ReplayBuffer):
                            number=len(self.source_imgs), mask=None, is_gt_sample=True)
       sample.update_mask(entry['mask'].long().cpu().unsqueeze(dim=0).detach().numpy().transpose(1, 2, 0))
       self.source_imgs.append(sample)
-
+    print("Created replay DS buffer for ds located with size:", len(dataset))
   def draw_samples(self, sample_size: int) -> List[TrainSample]:
     """ Returns samples consisting of target domain images and additional replayed images from the source domain """
     replay_size = math.ceil(sample_size * (1 - self.split_ratio))
     samples = super(DatasetSplitReplayBuffer, self).draw_samples(replay_size)
     random.shuffle(self.source_imgs)
-
+    print("drawing samples from replay 2 buffer. Split ratio: ", self.split_ratio, "len now:", len(samples))
     if self.split_ratio != 0:
       samples.extend(random.sample(self.source_imgs, sample_size - replay_size))
+    print("len later:", len(samples))
     return samples
 
   def get_all(self):
@@ -118,8 +119,13 @@ class DatasetSplitReplayBuffer(ReplayBuffer):
     full_train_set.extend(super().get_all())
 
     random.shuffle(self.source_imgs)
+    print("drawing all from replay 2 buffer. Split ratio: ", self.split_ratio, "len now:", len(full_train_set))
+    print("index:", math.ceil(len(full_train_set) * self.split_ratio))
+    print("len source", len(self.source_imgs))
     if self.split_ratio != 0:
       full_train_set.extend(self.source_imgs[:math.ceil(len(full_train_set) * self.split_ratio)])
+
+    print("len later:", len(full_train_set))
 
     return full_train_set
 
