@@ -1,0 +1,66 @@
+<launch>
+    <arg name="experiment_name"             default="ExplorationPlanner"/>
+    <arg name="experiment_config_embodied"  default="self_supervised/RunTurtlebot.yaml"/>     <!-- Non map related config (Model, Uncertainty, Online Learning, ... -->
+<arg name="planner_type"                default="mav_active_planner"/>  <!-- mav_active_planner | bump_and_rotate -->
+    <arg name="planner_config"              default="curiosity_planner_panoptic.yaml"/> <!-- Planner config with gain formulation -->
+    <arg name="map_config"                  default="Office_0/boundary.yaml"/> <!-- Map Boundaries to not drive in windows -->
+    <!-- Mapper -->
+    <arg name="config"                      default="single_tsdf"/> <!-- Map Configuration -->
+
+    <!-- publish uncertainty -->
+    <arg name="uncertainty"                 default="true"/>
+    <arg name="node_start_delay"            default="10"/>
+    <arg name="yaw_in_move_direction"       default="true"/>
+    <arg name="delay"                       default="6.0"/> <!-- Experiment Startup Delay -->
+
+    <!-- Airsim Node that Publishes Odometry and Images -->
+    <arg name="sim_time"                    default="true"/>
+    <arg name="mav_name"                    default="drone_1"/>
+    <arg name="output"                      default="screen"/>
+    <arg name="publish_clock"               default="true"/>
+    <arg name="is_vulkan"                   default="true"/>
+    <arg name="host"                        default="localhost"/>
+
+
+    <!-- If Experiment should be resumed from previous state -->
+    <arg name="resume"                      default = "false"/>
+    <arg name="folder_to_resume"            default="/media/rene/Empty/presentation/Curiosity_planner_clustered_959_01__12_10_2021"/>
+    <arg name="step_to_resume"              default="step_001" />
+    <arg name="load_file"                   default="$(arg folder_to_resume)/map/$(arg step_to_resume)/current_map.panmap"/>
+
+
+    <!-- Parse arguments to params -->
+    <param name="folder_to_resume"      value="$(arg folder_to_resume)"/>
+    <param name="step_to_resume"        value="$(arg step_to_resume)"/>
+    <param name="map_to_load"           value="$(arg load_file)"/>
+    <param name="resume"                value="$(arg resume)"/>
+    <param name="experiment_name"       value="$(arg experiment_name)"/>
+
+
+    <rosparam command="load"            file="$(find embodied_active_learning)cfg/experiments/environments/$(arg map_config)"/>
+    <rosparam command="load"            file="$(find embodied_active_learning)cfg/experiments/$(arg experiment_config_embodied)"/>
+
+    <group ns="planner">
+        <node name="planner_node" pkg="embodied_active_learning" type="curiosity_planner_node" output="screen"
+              required="true" >
+
+            <!-- Planner -->
+            <remap from="planner/colision" to="/airsim/drone_1/collision"/>
+            <!-- General Settings -->
+            <remap from="planner/odometry" to="/odom"/>
+            <remap from="/planner_wp_reached" to="/goal_reached"/>
+            <remap from="planner/command/trajectory" to="/airsim/$(arg mav_name)/command/trajectory"/>
+            <!-- Build the Planner by Configuration     -->
+            <rosparam command="load" file="$(find embodied_active_learning)/cfg/planners/$(arg planner_config)"/>
+            <rosparam command="load" file="$(find embodied_active_learning)/cfg/mapper/$(arg config).yaml"/>
+            <remap from="color_image_in" to="/semseg/rgb"/>
+            <remap from="depth_image_in" to="/semseg/depth"/>
+            <remap from="segmentation_image_in" to="/semseg/image"/>
+            <remap from="uncertainty_image_in" to="/semseg/uncertainty"/>
+        </node>
+    </group>
+
+    <!-- RVIZ Visualization-->
+    <node type="rviz" name="rviz2" pkg="rviz" args="-d $(find embodied_active_learning)/cfg/rviz/embodied.rviz"
+          output="screen"/>
+</launch>

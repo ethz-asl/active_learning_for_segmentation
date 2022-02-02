@@ -1,27 +1,31 @@
+#include <glog/logging.h>
 #include "active_3d_planning_ros/module/module_factory_ros.h"
 #include "active_3d_planning_ros/planner/ros_planner.h"
 
 #include "active_3d_planning_panoptic/initialization/panoptic_package.h"
-#include "active_3d_planning_mav/initialization/mav_package.h"
 
 #include "panoptic_mapping_ros/panoptic_mapper.h"
 #include "active_3d_planning_panoptic/map/single_tsdf_panoptic_map.h"
 
 #include <minkindr_conversions/kindr_tf.h>
-#include <glog/logging.h>
 #include <chrono>
 #include <thread>
+
+panoptic_mapping::PanopticMapper* mapper;
 
 int main(int argc, char **argv) {
     // leave some time for the rest to settle
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     // init ros
-    ros::init(argc, argv, "curiosity_planner_node");
+    ros::init(argc, argv, "curiosity_planner_node",  ros::init_options::NoSigintHandler);
 
+    // Always add these arguments for proper logging.
+    config_utilities::RequiredArguments ra(
+      &argc, &argv, {"--logtostderr", "--colorlogtostderr"});
     // prevent the linker from optimizing these packages away...
     active_3d_planning::initialize::panoptic_package();
-    active_3d_planning::initialize::mav_package();
+    // active_3d_planning::initialize::mav_package();
 
     // Set logging to debug for testing
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
@@ -36,8 +40,8 @@ int main(int argc, char **argv) {
     ros::Publisher handler;
 
     // Creating and start to mapper
-    panoptic_mapping::PanopticMapper mapper(nh, nh_private);
-
+    mapper = new panoptic_mapping::PanopticMapper(nh, nh_private);
+    std::cout << "<<<< Created Mapper node!" << std::endl;
     ros::NodeHandle planner_nh("planner");
     ros::NodeHandle planner_nh_private("~planner");
 
@@ -53,11 +57,12 @@ int main(int argc, char **argv) {
     active_3d_planning::Map& map = plnner_node.getMap();
     if (typeid(map) == typeid(active_3d_planning::map::PanopticMap)) {
         active_3d_planning::map::PanopticMap& internal_map_ = dynamic_cast<active_3d_planning::map::PanopticMap&>(map);
-        internal_map_.setPanopticMapper(std::unique_ptr<panoptic_mapping::PanopticMapper>(&mapper));
+        internal_map_.setPanopticMapper(std::unique_ptr<panoptic_mapping::PanopticMapper>(mapper));
+        std::cout << "FOUND MAP!!!" << std::endl;
     }
+    std::cout << "done setup " << std::endl;
 
-    ros::AsyncSpinner spinner(mapper.getConfig().ros_spinner_threads);
-    spinner.start();
+    ros::AsyncSpinner spinner(mapper->getConfig().ros_spinner_threads);
     plnner_node.planningLoop();
     ros::waitForShutdown();
 
