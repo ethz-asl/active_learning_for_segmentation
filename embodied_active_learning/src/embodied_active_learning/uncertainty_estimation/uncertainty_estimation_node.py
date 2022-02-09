@@ -249,7 +249,7 @@ class UncertaintyManager:
   def wp_reached(self, data):
     """ Once waypoint is reached, update reached_gp flag to make sure to capture this image for online training"""
     self.reached_gp = True
-    self.gp_gain = data.gain
+    self.gp_gain = 0#data.gain
 
   def toggle_running(self, req):
     """ start / stops the uncertainty estimator """

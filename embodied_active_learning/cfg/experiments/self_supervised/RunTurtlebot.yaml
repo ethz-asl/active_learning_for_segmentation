@@ -30,7 +30,7 @@ uncertainty:
     quantile: 0.8
     max: 200
 
-  rate: 1
+  rate: 2
   replay_old_pc: false
 
 pseudo_labler:
@@ -45,7 +45,7 @@ online_learning:
   test_datasets:
     - - "Test Studio"
       - "/media/rene/Empty/TestSets/Flat/LivingRoomWithDresser"
-  replay_dataset_path: "/home/rene/thesis/log/offline_training/PlannerWithImpactFactorCuriosity_run108_12__23_08_2021/scannet"
+  replay_dataset_path: "/media/xavier/ssd/scannet_ds"
 
   old_domain_ratio: 0.1
 
@@ -53,7 +53,7 @@ online_learning:
   # ------- Training Params ----------
   min_buffer_length: 10  # Wait for this amount of images before training can start
   use_bundle_based_training: true
-  bundle_size: 50
+  bundle_size: 120
 
   batch_size: 8
   use_weights: false
@@ -62,7 +62,7 @@ online_learning:
 
   replay_batch_length: 4
   save_frequency: 1 # Save best model after every training iteration
-  rate: 0.3 # Mainly capture image at waypoints
+  rate: 0.3 #Hz # Mainly capture image at waypoints
 
 
 minimap:
