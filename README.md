@@ -1,4 +1,4 @@
-# Active_learning_for_segmentation
+# Active Learning For Segmentation
 ![](documentation/movie.gif)
 ## Paper
 * René Zurbrügg, Hermann Blum, Cesar Cadena, Roland Siegwart and Lukas Schmid. "**Embodied Active Domain Adaptation for Semantic Segmentation via Informative Path Planning**" in *IEEE International Conference on Robotics and Automation (ICRA)*, 2022.
