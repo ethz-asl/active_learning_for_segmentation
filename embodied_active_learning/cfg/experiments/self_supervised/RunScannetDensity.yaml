@@ -7,15 +7,16 @@ experiment:
   max_iterations: 3 # max number of full iterations
 
 log:
-  log_path: "/media/rene/Empty/presentation/"
+  log_path: "/home/rene/out"
   log_poses: true
+  log_maps: false
 
 uncertainty:
   network:
     name: "online-clustered-lightweight-refinenet"
     size: 50
-    save_path: "/home/rene/thesis/checkpoints/"
-    checkpoint: "/home/rene/catkin_ws/src/refinenet_fork/light-weight-refinenet/scannet_50_classes_40_clusters.pth"
+    save_path: "/home/rene/out/checkpoints/"
+    checkpoint: "/home/rene/out/scannet_50_classes_40_clusters.pth"
 
     encoder:
       optim_type: "adam"
@@ -44,8 +45,8 @@ online_learning:
 
   test_datasets:
     - - "Test Studio"
-      - "/media/rene/Empty/TestSets/Flat/LivingRoomWithDresser"
-  replay_dataset_path: "/home/rene/thesis/log/offline_training/PlannerWithImpactFactorCuriosity_run108_12__23_08_2021/scannet"
+      - "/home/rene/out/testsets/LivingRoom"
+  replay_dataset_path: "/home/rene/out/replayset/scannet_ds"
 
   old_domain_ratio: 0.1
 
@@ -63,7 +64,3 @@ online_learning:
   replay_batch_length: 4
   save_frequency: 1 # Save best model after every training iteration
   rate: 0.4
-
-
-minimap:
-  path: "/home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/scripts/map_generation/minimap_flat.pickle"

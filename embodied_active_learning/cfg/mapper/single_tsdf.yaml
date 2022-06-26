@@ -14,7 +14,7 @@ use_class_layer: true
 
 labels:
   type: csv
-  file_name: /home/rene/thesis/panoptic/detectron_labels.csv
+  file_name: /home/rene/catkin_ws/src/active_learning_for_segmentation/embodied_active_learning/cfg/detectron_labels.csv
   verbosity: 99
 
 camera:

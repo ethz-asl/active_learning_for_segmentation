@@ -24,30 +24,3 @@ planner:
     a_max: 3.0
     yaw_rate_max: 1.57
     collision_radius: 0.2
-
-## Experiment (Half Flat) specific parameters
-#
-## Bounding boxes (in initialization frame, relative to PlayerStart)
-#map_bounding_volume:
-#  x_min: -7
-#  x_max: 4
-#  y_min: -1.75
-#  y_max: 6
-#  z_min: -1.4
-#  z_max: 1.4
-#
-#target_bounding_volume:
-#  x_min: -7
-#  x_max: 4
-#  y_min: -1.75
-#  y_max: 6
-#  z_min: -1.4
-#  z_max: 1.4
-#
-## System Constraints
-#planner:
-#  system_constraints:
-#    v_max: 3.0
-#    a_max: 3.0
-#    yaw_rate_max: 1.57
-#    collision_radius: 0.2
