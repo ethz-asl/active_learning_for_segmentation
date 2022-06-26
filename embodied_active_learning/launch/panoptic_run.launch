@@ -1,9 +1,9 @@
 <launch>
     <!--  Experiment arguments -->
     <arg name="experiment_name"             default="ExplorationPlanner"/>
-    <arg name="experiment_config_embodied"  default="fully_supervised/NYU_clustering.yaml"/>     <!-- Non map related config (Model, Uncertainty, Online Learning, ... -->
+    <arg name="experiment_config_embodied"  default="self_supervised/RunScannetDensity.yaml"/>     <!-- Non map related config (Model, Uncertainty, Online Learning, ... -->
     <arg name="planner_type"                default="mav_active_planner"/>  <!-- mav_active_planner | bump_and_rotate -->
-    <arg name="planner_config"              default="exploration_planner_panoptic.yaml"/> <!-- Planner config with gain formulation -->
+    <arg name="planner_config"              default="curiosity_planner_panoptic.yaml"/> <!-- Planner config with gain formulation -->
     <arg name="map_config"                  default="FullFlat/boundary.yaml"/> <!-- Map Boundaries to not drive in windows -->
     <!-- Mapper -->
     <arg name="config"                      default="single_tsdf"/> <!-- Map Configuration -->
