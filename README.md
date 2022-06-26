@@ -115,6 +115,7 @@ This will create the following files during the experiment:
 4. `~/out/<RunName>/scroes.csv` CSV file containing all mIoU scores on the training and test set.
 5. `~/out/<RunName>/params.yaml` yaml file containing all parameters that were set for this experiment
 
+Additional information can be found in the [Emboded Active Learning Package](embodied_active_learning).
 
 
 ### Others
