@@ -38,11 +38,11 @@ Installation instructions for Linux.
 2. If not already done so, create a catkin workspace with [catkin tools](https://catkin-tools.readthedocs.io/en/latest/):
 
 ```shell script
-sudo apt-get install python-catkin-tools
+sudo apt-get install python3-catkin-tools
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws
 catkin init
-catkin config --extend /opt/ros/melodic  # exchange melodic for your ros distro if necessary
+catkin config --extend /opt/ros/noetic  # exchange melodic for your ros distro if necessary
 catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin config --merge-devel
 ```
