@@ -3,5 +3,22 @@
     uri: https://github.com/catkin/catkin_simple.git
 
 - git:
-    local-name: mav_acive_3d_path_planning
+    local-name: mav_active_3d_path_planning
+    version: zrene/release_embodied
     uri: https://github.com/ethz-asl/mav_active_3d_planning
+
+- git:
+    local-name: light-weight-refinenet
+    uri: https://github.com/renezurbruegg/light-weight-refinenet
+    
+- git:
+    local-name: panoptic_mapping
+    version: zrene/embodied_active_learning
+    uri: https://github.com/ethz-asl/panoptic_mapping
+- git:
+    local-name: AirSim
+    version: v.1.4.0/embodied_active_learning
+    uri: https://github.com/ethz-asl/AirSim
+- git:
+    local-name densetorch
+    uri: https://github.com/drsleep/densetorch.git
