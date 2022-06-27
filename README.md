@@ -1,18 +1,28 @@
 # Active Learning For Segmentation
 ![](documentation/movie.gif)
-## Paper
+
+## Table of Contents
+* [Paper and Video](#Paper-and-Video)
+* [Installation](#Installation)
+* [Examples](#Examples)
+* [Code Structure](#Embodied-Active-Learning-Package)
+
+
+## Paper and Video
+If you find this package useful for your research, please consider citing our paper:
 * René Zurbrügg, Hermann Blum, Cesar Cadena, Roland Siegwart and Lukas Schmid. "**Embodied Active Domain Adaptation for Semantic Segmentation via Informative Path Planning**" in *IEEE Robotics and Automation Letters (RA-L)*, 2022.
   \[[ArXiv](https://arxiv.org/abs/2203.00549) | [Video](https://www.youtube.com/watch?v=FeFPEdZzT3w)]
-If you find this package useful for your research, please consider citing our paper:
-```bibtex
-@article{Zurbrgg2022EmbodiedAD,
-  title={Embodied Active Domain Adaptation for Semantic Segmentation via Informative Path Planning},
-  author={Ren{\'e} Zurbr{\"u}gg and Hermann Blum and C{\'e}sar Cadena and Roland Y. Siegwart and Lukas Maximilian Schmid},
-  journal={ArXiv},
-  year={2022},
-  volume={abs/2203.00549}
-}
-```
+
+  ```bibtex
+  @article{Zurbrgg2022EmbodiedAD,
+    title={Embodied Active Domain Adaptation for Semantic Segmentation via Informative Path Planning},
+    author={R. {Zurbr{\"u}gg} and H. {Blum} and C. {Cadena} and R. {Siegwart} and L. {Schmid}},
+    journal={ArXiv},
+    year={2022},
+    volume={abs/2203.00549}
+  }
+  ```
+  
 ### Reproducing the Experiments
 #### Installation 
 Installation instructions for Linux. It is expected that Unreal Engine is already installed!
