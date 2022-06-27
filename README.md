@@ -4,7 +4,7 @@
 ## Table of Contents
 * [Paper and Video](#Paper-and-Video)
 * [Installation](#Installation)
-* [Examples](#Examples)
+* [Examples](#Example)
 * [Code Structure](#Embodied-Active-Learning-Package)
 
 
