@@ -106,7 +106,7 @@ wstool update
 
 ### Example
 In order to run an experiment, first download the Flat Environment [Here](https://drive.google.com/file/d/17TVKpT9kzytpazMqiCQee4QbiRqwl0Qz/view?usp=sharing).
-Secondly, download the [Data Package](https://drive.google.com/file/d/17TVKpT9kzytpazMqiCQee4QbiRqwl0Qz/view?usp=sharing) and extract it at a location of your choice.  
+Secondly, download the [Data Package](https://drive.google.com/file/d/1pBuiNNASQqvGZU6xewf7gnOOwXU3DD5b/view?usp=sharing) and extract it at a location of your choice.  
 The Data Package contains the following Files:
 - `replayset`: Subset of the Scannet Dataset, which is used as replay buffer.
 - `testsets`: Selected Images with groundtruth annotations used for evaluation
